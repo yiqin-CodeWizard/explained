@@ -11,7 +11,7 @@
       const listener = event => {
         if (event.source !== window || event.origin !== location.origin || event.data?.channel !== 'EXPLAINED_DIRECT_OUTPUT_V1' || event.data.nonce !== nonce || event.data.event !== 'ready') return;
         cleanup();
-        resolve({ ready: true, version: '0.1.0', authenticated: event.data.authenticated === true, busy: !!active || event.data.busy === true });
+        resolve({ ready: true, version: '0.1.5', busy: !!active || event.data.busy === true });
       };
       const timer = setTimeout(() => { cleanup(); resolve({ ready: false }); }, 1500);
       window.addEventListener('message', listener);
@@ -39,7 +39,8 @@
       if (['text', 'complete'].includes(m.event) && typeof m.text === 'string' && m.text.length <= 32768) {
         const sources = (Array.isArray(m.sources) ? m.sources : []).slice(0, 32).flatMap(s => {
           const url = Explained.safeURL(s?.url);
-          return url ? [{ url, label: String(s.label || new URL(url).hostname).slice(0, 200) }] : [];
+          const citationIds = (Array.isArray(s?.citationIds) ? s.citationIds : []).filter(id => typeof id === 'string' && /^(?:0|[1-9]\d{0,8})$/.test(id)).slice(0, 64);
+          return url ? [{ url, label: String(s.label || new URL(url).hostname).slice(0, 200), citationIds }] : [];
         });
         emit({ event: m.event === 'text' ? 'streaming' : 'complete', text: m.text, sources });
         if (m.event === 'complete') cleanup();

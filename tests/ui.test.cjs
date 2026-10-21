@@ -21,8 +21,10 @@ function mockChrome() {
   const listeners = [], incoming = [], disconnect = [];
   const data = { settings: { enabled: true, consent: false, language: 'en', layout: 'A', contextEnabled: true, pausedSites: [] } };
   window.testMessages = []; window.testHold = false; window.testError = null;
+  window.testControlMessages = []; window.testConnectionStatus = 'connected'; window.testOpenResult = { ok: true };
   window.chrome = {
     storage: { local: { get: async () => structuredClone(data), set: async next => {
+      if (window.testSettingsWriteError) throw new Error('Synthetic save failure');
       const oldValue = structuredClone(data.settings); Object.assign(data, structuredClone(next));
       listeners.forEach(fn => fn({ settings: { oldValue, newValue: structuredClone(data.settings) } }, 'local'));
     } }, onChanged: { addListener: fn => listeners.push(fn) } },
@@ -32,12 +34,19 @@ function mockChrome() {
         if (message.type !== 'LOOKUP' || window.testHold) return;
         setTimeout(() => {
           if (window.testError) { incoming.forEach(fn => fn({ id: message.id, event: 'error', code: window.testError })); return; }
-          const answer = message.mode === 'news' ? JSON.stringify({ stories: [{ date: new Date().toISOString().slice(0, 10), summary: 'A synthetic research development for UI verification.', sourceUrls: ['https://example.org/research'] }, { date: new Date().toISOString().slice(0, 10), summary: 'An unverified synthetic story.', sourceUrls: ['https://fabricated.example/'] }] }) : message.detail ? 'Mercury circles the Sun quickly. For example, one Mercury year is about 88 Earth days.' : 'Mercury is the smallest planet in our solar system. Here, the context refers to the planet rather than the element.';
+          const answer = message.mode === 'news' ? JSON.stringify({ stories: [{ date: new Date().toISOString().slice(0, 10), summary: 'A synthetic research development for UI verification.', sourceUrls: [], sourceCitations: [5] }, { date: new Date().toISOString().slice(0, 10), summary: 'An unverified synthetic story.', sourceUrls: ['https://fabricated.example/'] }] }) : message.detail ? 'Mercury circles the Sun quickly. For example, one Mercury year is about 88 Earth days.' : 'Mercury is the smallest planet in our solar system. Here, the context refers to the planet rather than the element.';
           incoming.forEach(fn => fn({ id: message.id, event: 'streaming', text: answer.slice(0, 40), sources: [] }));
-          setTimeout(() => incoming.forEach(fn => fn({ id: message.id, event: 'complete', text: answer, sources: message.mode === 'news' ? [{ url: 'https://example.org/research', label: 'Research' }] : [] })), 60);
+          setTimeout(() => incoming.forEach(fn => fn({ id: message.id, event: 'complete', text: answer, sources: message.mode === 'news' ? [{ url: 'https://example.org/research', label: 'Research', citationIds: ['5'] }] : [] })), 60);
         }, 70);
       } }),
-      sendMessage: async message => message.type === 'CONNECTION_STATUS' ? { status: 'connected' } : { ok: true }
+      sendMessage: async message => {
+        window.testControlMessages.push(message);
+        if (message.type === 'CONNECTION_STATUS') {
+          if (window.testStatusHold) return new Promise(resolve => { window.finishStatus = resolve; });
+          return { status: window.testConnectionStatus };
+        }
+        return window.testOpenResult;
+      }
     },
     tabs: { query: async () => [{ url: 'https://reading.example/article' }] }
   };
@@ -67,10 +76,15 @@ async function select(page, selector, phrase) {
     await page.goto(base + '/article'); await page.evaluate(mockChrome);
     for (const file of ['shared.js', 'reader-styles.js', 'reader.js']) await page.addScriptTag({ url: base + '/explained-extension/' + file });
     await select(page, '#reading', 'Mercury');
-    await page.getByRole('button', { name: 'Enable and explain' }).waitFor();
-    check(await page.evaluate(() => testMessages.length === 0), 'No request before consent');
-    await page.getByRole('button', { name: 'Enable and explain' }).click();
+    check(await page.locator('explained-reader .assistant').count() === 0, 'No card appears before toolbar opt-in');
+    check(await page.evaluate(() => testMessages.length === 0 && testControlMessages.length === 0), 'Highlight before opt-in never connects or sends text');
+    await page.evaluate(() => setPrefs({ consent: true }));
+    check(await page.evaluate(() => testMessages.length === 0), 'Enabling alone never submits the earlier highlight');
+    await select(page, '#reading', 'Mercury');
     await page.getByRole('button', { name: 'Explain a little more' }).waitFor();
+    await page.screenshot({ path: path.join(output, 'first-highlight.png') });
+    check(await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Highlight after opt-in automatically submits Explain once');
+    check(await page.locator('[data-action="request"]').count() === 0, 'Explain has no extra confirmation button');
     const sent = await page.evaluate(() => testMessages.find(m => m.type === 'LOOKUP'));
     check(sent.term === 'Mercury' && sent.context.includes('smallest planet') && sent.context.length <= 600, 'Selection and context contract');
     check(!sent.context.includes('HIDDEN_PRIVATE_CONTEXT'), 'Hidden page content excluded from context');
@@ -97,7 +111,15 @@ async function select(page, selector, phrase) {
     await page.locator('explained-reader .news-story').first().waitFor();
     check(await page.locator('explained-reader .news-story').count() === 2, 'Parsed stories rendered');
     check(await page.locator('explained-reader a').count() === 1, 'Only structured source URL becomes link');
+    check(await page.locator('explained-reader .news-story').first().locator('a').getAttribute('href') === 'https://example.org/research', 'Citation ID resolves to the original source URL');
+    check(await page.locator('explained-reader .news-story').first().locator('.notice').count() === 0, 'Matched story has no missing-source warning');
     check((await page.locator('explained-reader .assistant').textContent()).includes('unverified'), 'Missing source warning');
+    const newsRequests = await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length);
+    await page.getByRole('tab', { name: 'News' }).focus();
+    await page.keyboard.press('Home');
+    await page.getByRole('tab', { name: 'Explain' }).waitFor();
+    await page.keyboard.press('End');
+    check(await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length) === newsRequests, 'Keyboard mode switching reuses completed answers without duplicate requests');
     await page.screenshot({ path: path.join(output, 'news.png') });
     for (const layout of ['B', 'C']) {
       await page.evaluate(layout => setPrefs({ layout }), layout);
@@ -117,7 +139,11 @@ async function select(page, selector, phrase) {
     await page.evaluate(() => setPrefs({ pausedSites: ['127.0.0.1'] }));
     await select(page, '#reading', 'Mercury');
     check(await page.locator('explained-reader .assistant').count() === 0, 'Site pause prevents lookup');
-    await page.evaluate(() => { setPrefs({ pausedSites: [], contextEnabled: true }); window.testHold = true; });
+    const pausedRequests = await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length);
+    await page.evaluate(() => setPrefs({ enabled: false, pausedSites: [] }));
+    await select(page, '#reading', 'Mercury');
+    check(await page.locator('explained-reader .assistant').count() === 0 && await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length) === pausedRequests, 'Global pause prevents automatic explanation');
+    await page.evaluate(() => { setPrefs({ enabled: true, pausedSites: [], contextEnabled: true }); window.testHold = true; });
     await select(page, '#reading', 'Mercury');
     const oldId = await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').at(-1).id);
     await select(page, '#other', 'DSP');
@@ -132,10 +158,10 @@ async function select(page, selector, phrase) {
     await page.getByRole('tab', { name: 'Explain' }).click();
     check((await page.locator('explained-reader .answer-copy').textContent()).includes('The newest answer.'), 'Explain response cached for current selection');
     await page.keyboard.press('Escape');
-    await page.evaluate(() => { window.testHold = false; window.testError = 'LOGIN_REQUIRED'; });
+    await page.evaluate(() => { window.testHold = false; window.testError = 'CONNECTION_UNAVAILABLE'; });
     await select(page, '#reading', 'Mercury');
     await page.getByRole('button', { name: 'Open DeepSeek', exact: true }).waitFor();
-    check((await page.locator('explained-reader .assistant').textContent()).includes('Sign in'), 'Missing login has action');
+    check(!(await page.locator('explained-reader .assistant').textContent()).includes('Sign in'), 'Connection recovery does not require an account in its wording');
     await page.screenshot({ path: path.join(output, 'login-needed.png') });
     await page.keyboard.press('Escape');
     await page.setViewportSize({ width: 375, height: 667 });
@@ -149,7 +175,10 @@ async function select(page, selector, phrase) {
     await popup.addInitScript(mockChrome); await popup.goto(base + '/explained-extension/popup.html');
     await popup.getByRole('button', { name: 'Enable lookups' }).click();
     await popup.waitForFunction(() => document.getElementById('consent-panel').hidden);
-    check(await popup.locator('#connection-status').textContent() === 'Session detected · checked on lookup', 'Popup connection status');
+    check(await popup.locator('#connection-status').textContent() === 'Website connection ready', 'Popup connection status');
+    check(await popup.evaluate(() => !testControlMessages.some(m => m.type === 'OPEN_CONNECTION') && testMessages.length === 0), 'Toolbar opt-in neither opens DeepSeek nor sends text');
+    await popup.getByRole('button', { name: 'Open DeepSeek', exact: false }).click();
+    check(await popup.evaluate(() => testControlMessages.some(m => m.type === 'OPEN_CONNECTION')), 'Open DeepSeek is a separate explicit toolbar action');
     await popup.locator('#language').selectOption('zh-CN');
     await popup.waitForFunction(() => document.getElementById('language').value === 'zh-CN');
     await popup.getByRole('button', { name: 'Pause site', exact: true }).click();
@@ -157,6 +186,106 @@ async function select(page, selector, phrase) {
     check(true, 'Popup site control persists');
     await popup.setViewportSize({ width: 352, height: 680 });
     await popup.screenshot({ path: path.join(output, 'toolbar-panel.png') });
+    const setupPage = await context.newPage(); setupPage.on('pageerror', e => errors.push(e.message));
+    async function freshSetup() {
+      await setupPage.goto(base + '/article'); await setupPage.evaluate(mockChrome);
+      for (const file of ['shared.js', 'reader-styles.js', 'reader.js']) await setupPage.addScriptTag({ url: base + '/explained-extension/' + file });
+    }
+    for (const layout of ['A', 'B', 'C']) {
+      await freshSetup();
+      await setupPage.evaluate(layout => { setPrefs({ consent: true, layout }); window.testError = 'CONNECTION_UNAVAILABLE'; window.pageClicks = 0; document.addEventListener('click', () => { window.pageClicks++; }); }, layout);
+      await select(setupPage, '#reading', 'Mercury');
+      check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Highlight starts Explain without another click in layout: ' + layout);
+      await setupPage.getByRole('button', { name: 'Open DeepSeek', exact: true }).waitFor();
+      check(await setupPage.evaluate(() => pageClicks === 0), 'Card buttons do not trigger page click handlers: ' + layout);
+      if (layout === 'A') {
+        await setupPage.evaluate(() => { window.testOpenResult = { ok: false }; });
+        await setupPage.getByRole('button', { name: 'Open DeepSeek', exact: true }).click();
+        await setupPage.getByText('DeepSeek could not be opened.', { exact: false }).waitFor();
+        check(await setupPage.getByRole('button', { name: 'Open DeepSeek', exact: true }).isEnabled(), 'Failed open leaves a working recovery button');
+        await setupPage.evaluate(() => { window.testOpenResult = { ok: true }; });
+      }
+      await setupPage.getByRole('button', { name: 'Open DeepSeek', exact: true }).focus();
+      await setupPage.keyboard.press('Enter');
+      await setupPage.evaluate(() => { window.testError = null; window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); });
+      await setupPage.waitForTimeout(100);
+      check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Opening and returning never auto-submit: ' + layout);
+      await setupPage.screenshot({ path: path.join(output, `connection-${layout.toLowerCase()}.png`) });
+      await setupPage.getByRole('button', { name: 'Retry', exact: true }).click();
+      await setupPage.getByRole('button', { name: 'Explain a little more' }).waitFor();
+      check(await setupPage.evaluate(() => { const lookups = testMessages.filter(m => m.type === 'LOOKUP'); return lookups.length === 2 && lookups[1].term === 'Mercury' && lookups[1].context === lookups[0].context; }), 'Explicit retry submits the preserved selection once: ' + layout);
+      await setupPage.keyboard.press('Escape');
+    }
+    await freshSetup();
+    await select(setupPage, '#reading', 'Mercury');
+    await setupPage.evaluate(() => setPrefs({ consent: true }));
+    await setupPage.waitForTimeout(100);
+    check(await setupPage.evaluate(() => testMessages.length === 0) && await setupPage.locator('explained-reader .assistant').count() === 0, 'Toolbar opt-in does not resume a previous selection');
+    await select(setupPage, '#reading', 'Mercury');
+    await setupPage.getByRole('tab', { name: 'News' }).click();
+    await setupPage.locator('.news-story').first().waitFor();
+    check(await setupPage.evaluate(() => { const calls = testMessages.filter(m => m.type === 'LOOKUP'); return calls.length === 2 && calls[0].mode === 'explain' && calls[1].mode === 'news'; }), 'Switching to News searches immediately without another confirmation');
+    check(await setupPage.locator('[data-action="request"]').count() === 0, 'News has no extra confirmation button');
+    await setupPage.keyboard.press('Escape');
+    await setupPage.evaluate(() => { window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); });
+    await setupPage.waitForTimeout(100);
+    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 2), 'Closing and returning cannot submit hidden selections');
+    await freshSetup();
+    await setupPage.evaluate(() => { setPrefs({ consent: true }); window.testError = 'EXTENSION_RELOADED'; });
+    await select(setupPage, '#reading', 'Mercury');
+    await setupPage.getByRole('button', { name: 'Refresh page', exact: true }).waitFor();
+    check(await setupPage.getByRole('button', { name: 'Retry', exact: true }).count() === 0, 'Reloaded extensions offer refresh instead of a broken retry');
+    await setupPage.setViewportSize({ width: 375, height: 667 });
+    await freshSetup();
+    await setupPage.evaluate(() => { setPrefs({ consent: true, layout: 'B', language: 'zh-TW' }); window.testError = 'CONNECTION_UNAVAILABLE'; });
+    await select(setupPage, '#reading', 'Mercury');
+    await setupPage.locator('[data-action="connection"]').waitFor();
+    const setupBox = await setupPage.locator('explained-reader .assistant').boundingBox();
+    check(setupBox.x >= 0 && setupBox.y >= 0 && setupBox.x + setupBox.width <= 375 && setupBox.y + setupBox.height <= 667, 'Connection recovery fits a small viewport');
+    await setupPage.locator('[data-action="connection"]').click();
+    await setupPage.screenshot({ path: path.join(output, 'connection-small.png') });
+    await setupPage.evaluate(() => { window.testError = null; });
+    await setupPage.locator('[data-action="retry"]').click();
+    await setupPage.locator('[data-action="more"]').waitFor();
+    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 2), 'Explicit retry works on small screens in Traditional Chinese');
+    const welcome = await context.newPage(); welcome.on('pageerror', e => errors.push(e.message));
+    await welcome.addInitScript(mockChrome);
+    await welcome.setViewportSize({ width: 520, height: 700 });
+    await welcome.goto(base + '/explained-extension/welcome.html');
+    await welcome.getByRole('button', { name: 'Enable lookups', exact: true }).waitFor({ state: 'visible' });
+    await welcome.waitForFunction(() => !document.getElementById('enable').disabled);
+    check(await welcome.evaluate(() => testMessages.length === 0 && testControlMessages.length === 0), 'Welcome screen makes no lookup or connection requests');
+    await welcome.screenshot({ path: path.join(output, 'welcome-setup.png') });
+    await welcome.getByLabel('Include nearby context', { exact: false }).uncheck();
+    await welcome.getByRole('button', { name: 'Enable lookups', exact: true }).focus();
+    await welcome.keyboard.press('Enter');
+    await welcome.getByRole('heading', { name: 'You’re all set.', exact: true }).waitFor();
+    const welcomePrefs = await welcome.evaluate(async () => (await chrome.storage.local.get('settings')).settings);
+    check(welcomePrefs.consent && welcomePrefs.enabled && !welcomePrefs.contextEnabled, 'Welcome enables only on explicit action and saves the context choice');
+    check(await welcome.evaluate(() => document.activeElement.id === 'complete-title'), 'Completion heading receives keyboard and screen-reader focus');
+    check(await welcome.evaluate(() => testMessages.length === 0 && testControlMessages.length === 0), 'Completing setup neither submits text nor opens DeepSeek');
+    await welcome.screenshot({ path: path.join(output, 'welcome-complete.png') });
+    await welcome.evaluate(() => { window.testClosed = false; window.close = () => { window.testClosed = true; }; });
+    await welcome.getByRole('button', { name: 'Start exploring' }).click();
+    check(await welcome.evaluate(() => testClosed), 'Start exploring closes the setup window without navigating to an external page');
+    await welcome.goto(base + '/explained-extension/welcome.html');
+    await welcome.waitForFunction(() => !document.getElementById('enable').disabled);
+    await welcome.evaluate(() => { window.testClosed = false; window.close = () => { window.testClosed = true; }; });
+    await welcome.getByRole('button', { name: 'Maybe later' }).click();
+    check(await welcome.evaluate(async () => testClosed && !(await chrome.storage.local.get('settings')).settings.consent && testControlMessages.length === 0), 'Skipping leaves lookups unenabled and never opens a connection');
+    await welcome.setViewportSize({ width: 375, height: 667 });
+    await welcome.goto(base + '/explained-extension/welcome.html');
+    await welcome.waitForFunction(() => !document.getElementById('enable').disabled);
+    check(await welcome.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Welcome setup fits a small viewport without horizontal overflow');
+    await welcome.evaluate(() => { window.testSettingsWriteError = true; });
+    await welcome.getByRole('button', { name: 'Enable lookups', exact: true }).click();
+    await welcome.getByText('Lookups could not be enabled.', { exact: false }).waitFor();
+    check(await welcome.getByRole('button', { name: 'Enable lookups', exact: true }).isEnabled() && await welcome.locator('#complete').isHidden(), 'Save failure keeps setup actionable without false success');
+    await welcome.evaluate(() => { window.testSettingsWriteError = false; });
+    await welcome.getByRole('button', { name: 'Enable lookups', exact: true }).click();
+    await welcome.getByRole('heading', { name: 'You’re all set.', exact: true }).waitFor();
+    check(await welcome.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Completion screen fits a small viewport');
+    await welcome.screenshot({ path: path.join(output, 'welcome-small.png') });
     check(errors.length === 0, 'No browser JavaScript errors: ' + errors.join(', '));
     fs.writeFileSync(path.join(output, 'ui-results.json'), JSON.stringify({ checks, passed: true, errors, scope: 'Localhost UI with controlled responses, not installed-extension or authenticated DeepSeek validation.' }, null, 2));
     console.log(`${checks} browser UI checks passed. Screenshots: validation/`);

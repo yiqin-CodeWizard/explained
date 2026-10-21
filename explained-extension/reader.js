@@ -5,6 +5,9 @@
   let host, shadow, port, heartbeat, debounce, rangeForPosition;
   let lastFocus = null;
   let pointerStart = null;
+  let selectionVersion = 0;
+  let openingConnection = false;
+  let connectionNotice = '';
   const state = { open: false, id: null, term: '', context: '', capturedContext: '', mode: 'explain', detail: false, contextOpen: false, phase: '', text: '', sources: [], code: '', cache: new Map() };
   const text = (en, zh, tw = zh) => prefs.language === 'en' ? en : prefs.language === 'zh-TW' ? tw : zh;
   const allowed = () => prefs.enabled && !prefs.pausedSites.includes(location.hostname);
@@ -31,12 +34,22 @@
     const style = document.createElement('style');
     style.textContent = globalThis.ExplainedReaderCSS;
     shadow.append(style, Object.assign(document.createElement('div'), { id: 'root' }));
-    shadow.addEventListener('click', onAction);
+    shadow.addEventListener('pointerdown', event => {
+      event.stopPropagation();
+      // Keep the reading selection when a mouse presses a card button. Keyboard
+      // focus and keyboard activation continue to work normally.
+      if (event.target.closest('button') && event.pointerType === 'mouse') event.preventDefault();
+    });
+    shadow.addEventListener('pointerup', event => event.stopPropagation());
+    shadow.addEventListener('click', event => { event.stopPropagation(); void onAction(event); });
     shadow.addEventListener('keydown', event => {
       if (event.key === 'Escape') { event.stopPropagation(); close(true); }
       if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key) && event.target.matches('[role="tab"]')) {
-        event.preventDefault(); state.mode = event.target.dataset.mode === 'explain' ? 'news' : 'explain';
-        void lookup(); render(); shadow.querySelector(`[data-mode="${state.mode}"]`)?.focus();
+        event.preventDefault();
+        const next = event.key === 'Home' ? 'explain' : event.key === 'End' ? 'news' : state.mode === 'explain' ? 'news' : 'explain';
+        if (next === state.mode) return;
+        state.mode = next; state.detail = false;
+        void lookup(); shadow.querySelector(`[data-mode="${state.mode}"]`)?.focus();
       }
     });
     document.documentElement.append(host);
@@ -47,7 +60,9 @@
     state.id = null;
   }
   function close(restoreFocus = false) {
+    ++selectionVersion;
     clearTimeout(debounce); stop(); state.open = false; state.cache.clear(); render();
+    state.term = ''; state.context = ''; state.capturedContext = ''; state.text = ''; state.sources = []; rangeForPosition = null;
     if (restoreFocus && lastFocus?.isConnected) lastFocus.focus({ preventScroll: true });
   }
   function connect() {
@@ -77,9 +92,10 @@
   }
   function cacheKey() { return `${state.mode}/${state.detail}/${prefs.language}/${prefs.contextEnabled}`; }
   async function lookup(force = false) {
+    connectionNotice = '';
     stop();
     if (!state.open || !allowed()) return;
-    if (!prefs.consent) { state.phase = 'consent'; render(); return; }
+    if (!prefs.consent) { close(); return; }
     state.context = prefs.contextEnabled ? state.capturedContext : '';
     const cached = !force && state.cache.get(cacheKey());
     if (cached) { Object.assign(state, cached, { phase: 'ready' }); render(); return; }
@@ -117,8 +133,9 @@
     if (next && !editable(next) && !next.querySelector('input,textarea,[contenteditable],script,style')) all += ' ' + siblingText(next).slice(0, 600);
     return Explained.contextWindow(all, start, end);
   }
-  function selection() {
-    if (!allowed() || document.designMode === 'on') return;
+  async function selection() {
+    await settingsReady;
+    if (!allowed() || !prefs.consent || document.designMode === 'on') return;
     const selected = window.getSelection();
     if (!selected?.rangeCount || selected.isCollapsed || editable(selected.anchorNode) || editable(selected.focusNode) || host?.contains(selected.anchorNode)) return;
     const range = selected.getRangeAt(0);
@@ -129,6 +146,7 @@
     const context = captureContext(range);
     if (state.open && state.term === term && state.capturedContext === context) return;
     stop(); state.cache.clear();
+    ++selectionVersion; connectionNotice = '';
     lastFocus = document.activeElement;
     rangeForPosition = range.cloneRange();
     Object.assign(state, { open: true, term, capturedContext: context, context: prefs.contextEnabled ? context : '', mode: 'explain', detail: false, contextOpen: false });
@@ -141,7 +159,6 @@
     }).join('');
   }
   function answer() {
-    if (state.phase === 'consent') return `<div class="empty-state"><h3>${text('A little context, a clearer answer','一点语境，理解更清楚','一點語境，理解更清楚')}</h3><p>${text('Explained sends your selected text and, when enabled, up to 600 characters of nearby context to your signed-in DeepSeek website. DeepSeek may keep these chats. Input fields and editors are excluded.','Explained 会将所选文字及启用时最多 600 字符的附近上下文发送到已登录的 DeepSeek 网页。DeepSeek 可能保留这些对话。输入框和编辑器不在支持范围内。')}</p><button data-action="consent">${text('Enable and explain','启用并解释','啟用並解釋')}</button><p>${text('Context sharing can be turned off in the toolbar panel.','可在工具栏面板中关闭上下文分享。')}</p></div>`;
     const waiting = ['connecting', 'loading', 'streaming'].includes(state.phase);
     const loading = waiting ? `<p class="loading-label" role="status"><i></i>${state.phase === 'connecting' ? text('Connecting to DeepSeek…','正在连接 DeepSeek…') : state.mode === 'news' ? text('Searching recent coverage…','正在搜索近期报道…') : text('Finding the meaning in context…','正在结合语境解释…')}</p>` : '';
     let body = '';
@@ -161,8 +178,9 @@
     // News JSON is kept out of the reading card until it can be parsed completely.
     if (!state.text && waiting) body = '<div class="skeleton" aria-hidden="true"><i></i><i></i><i></i></div>';
     if (state.phase === 'error' || state.phase === 'cancelled') {
-      const message = state.code === 'LOGIN_REQUIRED' ? text('Sign in to the dedicated DeepSeek tab, then retry.','请先在专用 DeepSeek 标签页登录，再重试。') : state.code === 'EXTENSION_RELOADED' ? text('Refresh this webpage after reloading the extension.','扩展重载后，请刷新当前网页。') : state.phase === 'cancelled' ? text('This lookup was stopped. You can retry when ready.','本次查询已停止，可随时重试。') : text('The website connection was interrupted or rejected. Open DeepSeek to check login or verification, then retry.','网页连接中断或请求被拒绝。请打开 DeepSeek 检查登录或验证，再重试。');
-      body += `<div class="empty-state" role="status"><h3>${text('Needs a moment','需要处理一下')}</h3><p>${message}</p>${state.code ? `<p class="notice">${esc(state.code)}</p>` : ''}<button data-action="connection">${text('Open DeepSeek','打开 DeepSeek')}</button> <button data-action="retry">${text('Retry','重试')}</button></div>`;
+      const refresh = state.code === 'EXTENSION_RELOADED';
+      const message = refresh ? text('Explained was updated or reloaded. Refresh this page to reconnect, then highlight again.','Explained 已更新或重载。请刷新此页面后重新划词。','Explained 已更新或重新載入。請重新整理此頁面後重新劃詞。') : state.phase === 'cancelled' ? text('This lookup was stopped. Your highlight is still here.','查询已停止，所选文字仍保留在这里。','查詢已停止，所選文字仍保留在這裡。') : text('Open DeepSeek, then return here and choose Retry. Returning to this page does not send your selection.','打开 DeepSeek 后，请返回这里点击重试。返回页面不会发送所选文字。','開啟 DeepSeek 後，請返回這裡點擊重試。返回頁面不會傳送所選文字。');
+      body += `<div class="empty-state setup-state" role="status"><h3>${refresh ? text('Refresh to reconnect','刷新后重新连接','重新整理後重新連接') : text('Let’s get you connected','继续连接','繼續連接')}</h3><p>${message}</p><div class="setup-actions">${refresh ? `<button class="primary-action" data-action="refresh">${text('Refresh page','刷新页面','重新整理頁面')}</button>` : `<button class="primary-action" data-action="retry">${text('Retry','重试','重試')}</button><button data-action="connection" ${openingConnection ? 'disabled' : ''}>${openingConnection ? text('Opening DeepSeek…','正在打开 DeepSeek…','正在開啟 DeepSeek…') : text('Open DeepSeek','打开 DeepSeek','開啟 DeepSeek')}</button>`}</div>${connectionNotice ? `<p class="notice">${esc(connectionNotice)}</p>` : ''}${state.code ? `<details><summary>${text('Connection details','连接详情','連接詳情')}</summary><p class="notice">${esc(state.code)}</p></details>` : ''}</div>`;
     }
     if (state.mode === 'explain' && state.phase === 'ready') body += `<button class="more-btn" data-action="more">${state.detail ? text('Keep it short','简短显示') : text('Explain a little more','再解释一点')}</button>`;
     return loading + body;
@@ -210,7 +228,7 @@
   }
   async function onAction(event) {
     const target = event.target.closest('button');
-    if (!target) return;
+    if (!target || target.disabled) return;
     if (target.dataset.mode) {
       if (state.mode === target.dataset.mode) return;
       state.mode = target.dataset.mode; state.detail = false; await lookup(); return;
@@ -220,16 +238,20 @@
     if (action === 'context') { state.contextOpen = !state.contextOpen; render(); }
     if (action === 'more') { state.detail = !state.detail; await lookup(); }
     if (action === 'retry') await lookup(true);
+    if (action === 'refresh') location.reload();
     if (action === 'connection') {
-      try { await chrome.runtime.sendMessage({ type: 'OPEN_CONNECTION' }); } catch { state.code = 'EXTENSION_RELOADED'; render(); }
-    }
-    if (action === 'consent') {
+      if (openingConnection) return;
+      const version = selectionVersion;
+      openingConnection = true; connectionNotice = '';
+      render();
       try {
-        const latest = Explained.settings((await chrome.storage.local.get('settings')).settings);
-        prefs = { ...latest, consent: true };
-        await chrome.storage.local.set({ settings: prefs });
-        await lookup();
-      } catch { state.phase = 'error'; state.code = 'EXTENSION_RELOADED'; render(); }
+        const result = await chrome.runtime.sendMessage({ type: 'OPEN_CONNECTION' });
+        if (!result?.ok) throw new Error('OPEN_FAILED');
+      } catch {
+        if (version === selectionVersion && state.open) {
+          connectionNotice = text('DeepSeek could not be opened. Try Open DeepSeek again, or refresh this page if the extension was reloaded.','无法打开 DeepSeek。请重试；如扩展已重载，请刷新此页面。','無法開啟 DeepSeek。請重試；如擴充功能已重新載入，請重新整理此頁面。');
+        }
+      } finally { openingConnection = false; if (version === selectionVersion && state.open) render(); }
     }
   }
   document.addEventListener('pointerdown', event => {
@@ -268,11 +290,11 @@
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local' || !changes.settings) return;
     const previous = prefs; prefs = Explained.settings(changes.settings.newValue);
-    if (!allowed()) close();
+    if (!allowed() || !prefs.consent) close();
     else if (state.open && (previous.language !== prefs.language || previous.contextEnabled !== prefs.contextEnabled)) {
       state.cache.clear(); state.phase = 'cancelled'; stop(); state.text = ''; state.sources = [];
       state.context = prefs.contextEnabled ? state.capturedContext : ''; render();
     } else render();
   });
-  chrome.storage.local.get('settings').then(result => { prefs = Explained.settings(result.settings); }).catch(() => {});
+  const settingsReady = chrome.storage.local.get('settings').then(result => { prefs = Explained.settings(result.settings); }).catch(() => {});
 })();

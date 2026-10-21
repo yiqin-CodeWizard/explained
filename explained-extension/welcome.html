@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Welcome to Explained</title><link rel="stylesheet" href="welcome.css"></head>
+<body>
+  <main>
+    <header><span class="logo" aria-hidden="true">e.</span><span>EXPLAINED</span></header>
+    <section id="setup" aria-labelledby="welcome-title">
+      <p class="eyebrow">A LITTLE MORE UNDERSTANDING</p>
+      <h1 id="welcome-title">Meet your reading companion.</h1>
+      <p class="intro">A clearer meaning. A little more context. Right beside what you’re reading.</p>
+      <div class="sharing">
+        <h2>A little context, with your permission.</h2>
+        <p>With lookups enabled, highlighting sends your selected text to DeepSeek for an explanation. Switching to News searches for recent developments. DeepSeek may keep these chats. Pause lookups anytime from the toolbar.</p>
+        <label class="context-option" for="context"><input id="context" type="checkbox" disabled><span><strong>Include nearby context</strong><span>Share up to 600 nearby characters with your selection to help clarify its meaning. You can change this anytime.</span></span></label>
+      </div>
+      <button id="enable" class="primary" disabled>Enable lookups</button>
+      <button id="later" class="secondary">Maybe later</button>
+      <p class="footnote">Enabling lookups won’t send text or open DeepSeek.</p>
+    </section>
+    <section id="complete" aria-labelledby="complete-title" hidden>
+      <p class="eyebrow">READY FOR YOUR NEXT READ</p>
+      <h1 id="complete-title" tabindex="-1">You’re all set.</h1>
+      <p class="intro">Try a little magic in your next read.</p>
+      <ol class="steps">
+        <li><span class="step-number" aria-hidden="true">1</span><span><strong>Open something you’re curious about.</strong><span>An article, a blog, a page you’re already reading.</span></span></li>
+        <li><span class="step-number" aria-hidden="true">2</span><span><strong>Highlight a word or phrase.</strong><span>An explanation appears automatically beside your selection.</span></span></li>
+        <li><span class="step-number" aria-hidden="true">3</span><span><strong>Follow your curiosity.</strong><span>Switch to News for recent developments. No extra confirmation needed.</span></span></li>
+      </ol>
+      <button id="done" class="primary">Start exploring</button>
+      <p class="footnote">Already have a page open? Refresh it once before trying.</p>
+      <p class="toolbar-tip">Pin Explained in Chrome’s Extensions menu to keep language, context and pause controls close by.</p>
+    </section>
+    <p id="feedback" role="status"></p>
+    <button id="reload" class="secondary" hidden>Try setup again</button>
+  </main>
+  <script src="shared.js"></script><script src="welcome.js"></script>
+</body>
+</html>
