@@ -24,8 +24,8 @@ function save(update) {
 async function connectionStatus() {
   try {
     const result = await chrome.runtime.sendMessage({ type: 'CONNECTION_STATUS' });
-    $('connection-status').textContent = { connected: 'Session detected · checked on lookup', login: 'Sign in needed', closed: 'Opens on your next lookup', unavailable: 'Open DeepSeek to check connection' }[result?.status] || 'Connection unavailable';
-    $('connection').textContent = result?.status === 'connected' ? 'Open DeepSeek ↗' : 'Open / sign in ↗';
+    $('connection-status').textContent = { connected: 'Website connection ready', closed: 'Opens on your next lookup', unavailable: 'Open DeepSeek to check connection' }[result?.status] || 'Connection unavailable';
+    $('connection').textContent = 'Open DeepSeek ↗';
   } catch { $('connection-status').textContent = 'Reload the extension to reconnect'; }
 }
 async function init() {
@@ -39,7 +39,7 @@ async function init() {
   render(); void connectionStatus();
 }
 $('enabled').onclick = () => save(current => ({ ...current, enabled: !current.enabled }));
-$('consent').onclick = async () => { if (await save({ consent: true, enabled: true })) await openConnection(); };
+$('consent').onclick = async () => { if (await save({ consent: true, enabled: true })) $('feedback').textContent = 'Lookups enabled. Highlight a phrase, then choose Explain or News when you want to send it.'; };
 $('language').onchange = event => { const language = event.target.value; void save({ language }); };
 $('layout').onchange = event => { const layout = event.target.value; void save({ layout }); };
 $('context').onchange = event => { const contextEnabled = event.target.checked; void save({ contextEnabled }); };
@@ -50,7 +50,7 @@ async function openConnection() {
   try {
     const result = await chrome.runtime.sendMessage({ type: 'OPEN_CONNECTION' });
     if (!result?.ok) throw new Error('OPEN_FAILED');
-    $('feedback').textContent = 'Sign in if needed, then return to your reading. Your highlight can continue there.';
+    $('feedback').textContent = 'DeepSeek opened. Return to your reading and choose Explain, Search news or Retry when you’re ready.';
   } catch { $('feedback').textContent = 'Could not open DeepSeek. Try again, or reload the extension and refresh your reading page.'; }
   finally { $('connection').disabled = false; }
 }

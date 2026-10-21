@@ -85,26 +85,26 @@ function background({ login = true, holdSettings = false, orphan = false, holdPi
   chrome.runtime.onConnect.fire(port);
   const lookup = id => port.onMessage.fire({ type: 'LOOKUP', id, term: 'Mercury', context: 'A planet.', mode: 'explain' });
   const complete = id => chrome.runtime.onMessage.fire({ type: 'EX_EVENT', id, event: 'complete', text: 'Answer.' }, { id: 'test', frameId: 0, tab: { id: 42 }, origin: 'https://chat.deepseek.com' }, () => {});
-  const request = message => new Promise(resolve => chrome.runtime.onMessage.fire(message, port.sender, resolve));
+  const request = message => new Promise(resolve => chrome.runtime.onMessage.fire(message, { id: 'test', url: 'chrome-extension://test/popup.html' }, resolve));
   return { chrome, port, calls, lookup, complete, local, releaseSettings, releasePing, request };
 }
-test('reader can open sign-in while a lookup is blocked waiting for the website', async () => {
+test('Open DeepSeek stays responsive while a lookup waits for the website', async () => {
   const env = background({ holdPing: true }); env.lookup('one'); await settle();
   assert.ok(env.calls.some(c => c[1]?.type === 'EX_PING'));
   let result;
   void env.request({ type: 'OPEN_CONNECTION' }).then(value => { result = value; });
   await settle();
-  assert.equal(result?.ok, true, 'Opening sign-in must not queue behind the pending lookup');
+  assert.equal(result?.ok, true, 'Opening DeepSeek must not queue behind the pending lookup');
   assert.equal(env.calls.filter(c => c[0] === 'create').length, 1, 'The existing connection tab is reused');
   assert.ok(env.calls.some(c => c[0] === 'update' && c[2].active));
   env.releasePing(); await settle(); env.complete('one');
 });
-test('reader connection status does not create a tab and reports sign-in after one is opened', async () => {
+test('toolbar connection status does not create a tab or infer an account requirement', async () => {
   const env = background({ login: false });
   assert.equal((await env.request({ type: 'CONNECTION_STATUS' })).status, 'closed');
   assert.equal(env.calls.length, 0);
   await env.request({ type: 'OPEN_CONNECTION' });
-  assert.equal((await env.request({ type: 'CONNECTION_STATUS' })).status, 'login');
+  assert.equal((await env.request({ type: 'CONNECTION_STATUS' })).status, 'connected');
   assert.equal(env.calls.filter(c => c[1]?.type === 'EX_RUN').length, 0);
 });
 test('coordinator cancels previous lookup, rejects stale answers, reuses background tab', async () => {
@@ -126,10 +126,10 @@ test('reader navigation during connection preparation prevents submission', asyn
   env.port.onDisconnect.fire(); env.releaseSettings(); await settle();
   assert.equal(env.calls.length, 0);
 });
-test('missing login has no completion request or automatic retry', async () => {
+test('website readiness, rather than an account-presence flag, allows an explicit lookup', async () => {
   const env = background({ login: false }); env.lookup('one'); await settle();
-  assert.equal(env.port.output.at(-1).code, 'LOGIN_REQUIRED');
-  assert.equal(env.calls.filter(c => c[1]?.type === 'EX_RUN').length, 0);
+  assert.equal(env.calls.filter(c => c[1]?.type === 'EX_RUN').length, 1);
+  env.complete('one');
 });
 test('orphaned website request is cancelled before a new submission', async () => {
   const env = background({ orphan: true }); env.lookup('one'); await settle();
@@ -149,4 +149,11 @@ test('pausing during a lookup aborts it and prevents stale completion', async ()
   await settle(); env.complete('one');
   assert.equal(env.port.output.some(m => m.event === 'complete'), false);
   assert.ok(env.calls.some(c => c[1]?.type === 'EX_CANCEL'));
+});
+
+test('coordinator rejects lookups before toolbar consent without creating a connection', async () => {
+  const env = background(); env.local.settings.consent = false;
+  env.lookup('before-consent'); await settle();
+  assert.equal(env.port.output.at(-1).code, 'PAUSED_OR_CONSENT_REQUIRED');
+  assert.equal(env.calls.length, 0);
 });

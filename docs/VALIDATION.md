@@ -1,10 +1,10 @@
 # Validation
 
-Version 0.1.2, 2026-10-21.
+Version 0.1.3, 2026-10-21.
 
-The implementation passed JavaScript syntax/resource checks, 21 Node contract/bridge/decoder tests and 43 controlled browser UI checks. The UI test uses the shipped scripts on localhost in a temporary profile with synthetic replies. It checks consent, bounded/rendered context, hidden/editable exclusion, expansion, News parsing and source-link matching, layouts A/B/C, 375 px viewport, site pause, stale results, cached view switching, login errors and toolbar preferences.
+The implementation passed JavaScript syntax/resource checks, 23 Node contract/bridge/decoder tests and 50 controlled browser UI checks. The UI test uses the shipped scripts on localhost in a temporary profile with synthetic replies. It checks consent, bounded/rendered context, hidden/editable exclusion, expansion, News parsing and source-link matching, layouts A/B/C, 375 px viewport, site pause, stale results, cached view switching, connection errors and toolbar preferences.
 
-First-use checks cover inline consent, enabling from the toolbar with an open card, mouse and keyboard actions in layouts A/B/C, failed connection opening, sign-in continuation exactly once, explicit retry for other failures, cancellation during a pending status probe, page refresh after an extension reload, and a small-screen Traditional Chinese flow. Decoder tests cover delayed SEARCH results, batched patches, citation IDs, and URL filtering.
+Privacy and interaction checks cover no card or request before toolbar opt-in, no submission from enabling or highlighting, explicit Explain and Search news actions, mode changes without submission, mouse and keyboard buttons in layouts A/B/C, failed connection opening, no continuation after returning to the page, explicit Retry, page refresh after an extension reload, and small-screen Traditional Chinese recovery. Decoder tests cover delayed SEARCH results, batched patches, citation IDs, and URL filtering.
 
 The bridge tests simulate session/challenge/completion responses, a solver worker, split Chinese UTF-8 and SSE framing, HTTP/authentication failures and cancellation. They check that credential/session/proof values do not enter relayed extension events. They do not independently validate the remote solver binary or a real server challenge.
 
@@ -12,7 +12,8 @@ The bridge tests simulate session/challenge/completion responses, a solver worke
 
 The current package has not been independently tested against an authenticated account. An earlier connection prototype received qualitative user feedback that it was fast; this is not a reproducible speed measurement for this release.
 
-- Install the unpacked directory with no saved preferences. Highlight before opening the toolbar; enable from the card, open sign-in, and return to the reading tab. Check that the same highlight continues once. Repeat using toolbar setup while the card is open.
+- Install with no saved preferences. Confirm highlighting is silent before toolbar opt-in. After enabling, check that each selection waits for an explicit action. Open DeepSeek and return; nothing should submit until Retry.
+- Verify the actual website route in both guest and account sessions where available. Synthetic missing-token success does not prove live guest compatibility.
 - Test cold and warm Explain, with DeepSeek in the background.
 - Test News on a current subject; compare each returned event date, summary and linked source. Current structured metadata and semantic story/source correspondence still need live validation.
 - Change selection during loading, dismiss the card and switch modes. No outdated answer should reappear.

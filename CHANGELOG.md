@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.3 — 2026-10-21
+
+- Keep enabling lookups in the toolbar; highlighting before opt-in is silent.
+- Require an explicit Explain selection or Search news action for each new selection. Enabling and switching modes do not submit text.
+- Remove automatic continuation on return from DeepSeek and use neutral Open DeepSeek / Retry wording.
+- Remove account-presence prechecks; send existing same-origin credentials when available and let the website accept or reject the request.
+- Clear selected text and context on dismissal and update privacy guidance.
+
 ## 0.1.2 — 2026-10-21
 
 - Complete first-use setup from the highlight card; enabling in the toolbar also continues an open card.

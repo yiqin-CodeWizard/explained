@@ -46,7 +46,7 @@ function setup({ login = true, reject = null, hold = false, frames = null } = {}
 test('direct bridge: three same-origin POSTs, streaming UTF-8, search flags and bounded source relay', async () => {
   const env = setup();
   const status = await env.send({ type: 'EX_PING' });
-  assert.equal(status.authenticated, true);
+  assert.equal(status.ready, true);
   assert.equal((await env.run('one', 'news')).accepted, true);
   await until(() => env.output.some(m => m.event === 'complete'));
   assert.equal(env.calls.length, 3);
@@ -77,11 +77,11 @@ test('News bridge relays delayed SEARCH URLs and citation IDs through to story m
   const story = context.Explained.newsResult(result.text, result.sources, new Date('2026-10-21T12:00:00Z')).stories[0];
   assert.equal(story.sources[0].url, 'https://example.org/story');
 });
-test('direct bridge: missing login and HTTP rejection never retry or switch routes', async () => {
-  for (const options of [{ login: false }, { reject: 401 }, { reject: 403 }]) {
+test('direct bridge: HTTP rejection never retries or switches routes', async () => {
+  for (const options of [{ login: false, reject: 401 }, { reject: 401 }, { reject: 403 }]) {
     const env = setup(options); await env.run('one'); await until(() => env.output.some(m => m.event === 'error'));
     assert.equal(env.calls.filter(c => c.url.endsWith('/completion')).length, 0);
-    assert.equal(env.output.find(m => m.event === 'error').code, options.login === false ? 'LOGIN_REQUIRED' : 'HTTP_REJECTED');
+    assert.equal(env.output.find(m => m.event === 'error').code, 'HTTP_REJECTED');
   }
 });
 test('direct bridge: cancellation aborts network before accepting the next request', async () => {
@@ -97,4 +97,13 @@ test('website bridge ignores requests from webpage content-script senders', () =
   let accepted = false;
   for (const fn of env.runtimeListeners) fn({ type: 'EX_RUN' }, { id: 'test', tab: { id: 5 }, url: 'https://evil.example/' }, () => { accepted = true; });
   assert.equal(accepted, false); assert.equal(env.calls.length, 0);
+});
+
+test('missing stored account token does not preempt a website-supported session', async () => {
+  const env = setup({ login: false });
+  await env.run('guest-session', 'news');
+  await until(() => env.output.some(m => m.event === 'complete'));
+  assert.equal(env.calls.length, 3);
+  for (const call of env.calls) assert.equal(Object.hasOwn(call.options.headers, 'authorization'), false);
+  assert.equal(env.output.find(m => m.event === 'complete').text, '水星是行星。');
 });

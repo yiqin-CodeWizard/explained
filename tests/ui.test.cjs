@@ -52,7 +52,7 @@ function mockChrome() {
   window.emitTest = message => incoming.forEach(fn => fn(message));
   window.setPrefs = patch => window.chrome.storage.local.set({ settings: { ...data.settings, ...patch } });
 }
-async function select(page, selector, phrase) {
+async function select(page, selector, phrase, request = false) {
   await page.locator(selector).scrollIntoViewIfNeeded();
   await page.evaluate(({ selector, phrase }) => {
     const element = document.querySelector(selector), node = element.firstChild, start = node.textContent.indexOf(phrase);
@@ -61,6 +61,7 @@ async function select(page, selector, phrase) {
     element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0 }));
   }, { selector, phrase });
   await page.waitForTimeout(280);
+  if (request) await page.locator('[data-action="request"]').click();
 }
 (async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -75,10 +76,15 @@ async function select(page, selector, phrase) {
     await page.goto(base + '/article'); await page.evaluate(mockChrome);
     for (const file of ['shared.js', 'reader-styles.js', 'reader.js']) await page.addScriptTag({ url: base + '/explained-extension/' + file });
     await select(page, '#reading', 'Mercury');
-    await page.getByRole('button', { name: 'Enable and explain' }).waitFor();
+    check(await page.locator('explained-reader .assistant').count() === 0, 'No card appears before toolbar opt-in');
+    check(await page.evaluate(() => testMessages.length === 0 && testControlMessages.length === 0), 'Highlight before opt-in never connects or sends text');
+    await page.evaluate(() => setPrefs({ consent: true }));
+    check(await page.evaluate(() => testMessages.length === 0), 'Enabling alone never submits the earlier highlight');
+    await select(page, '#reading', 'Mercury');
+    await page.getByRole('button', { name: 'Explain selection', exact: true }).waitFor();
     await page.screenshot({ path: path.join(output, 'first-highlight.png') });
-    check(await page.evaluate(() => testMessages.length === 0), 'No request before consent');
-    await page.getByRole('button', { name: 'Enable and explain' }).click();
+    check(await page.evaluate(() => testMessages.length === 0), 'Highlighting after opt-in still requires an explicit action');
+    await page.getByRole('button', { name: 'Explain selection', exact: true }).click();
     await page.getByRole('button', { name: 'Explain a little more' }).waitFor();
     const sent = await page.evaluate(() => testMessages.find(m => m.type === 'LOOKUP'));
     check(sent.term === 'Mercury' && sent.context.includes('smallest planet') && sent.context.length <= 600, 'Selection and context contract');
@@ -90,7 +96,7 @@ async function select(page, selector, phrase) {
     });
     await page.waitForTimeout(280);
     check(await page.locator('explained-reader .assistant').count() === 0, 'Outside click with unchanged selection does not reopen card');
-    await select(page, '#reading', 'Mercury');
+    await select(page, '#reading', 'Mercury', true);
     await page.getByRole('button', { name: 'Explain a little more' }).waitFor();
     await page.getByRole('button', { name: '+ Context used' }).click();
     check((await page.locator('explained-reader .context-block').textContent()).includes('Mercury'), 'Context disclosure');
@@ -103,6 +109,7 @@ async function select(page, selector, phrase) {
     await page.getByRole('button', { name: 'Keep it short' }).waitFor();
     check((await page.locator('explained-reader .answer-copy').textContent()).includes('For example'), 'Expanded explanation uses actual request');
     await page.getByRole('tab', { name: 'News' }).click();
+    await page.getByRole('button', { name: 'Search news', exact: true }).click();
     await page.locator('explained-reader .news-story').first().waitFor();
     check(await page.locator('explained-reader .news-story').count() === 2, 'Parsed stories rendered');
     check(await page.locator('explained-reader a').count() === 1, 'Only structured source URL becomes link');
@@ -129,9 +136,9 @@ async function select(page, selector, phrase) {
     await select(page, '#reading', 'Mercury');
     check(await page.locator('explained-reader .assistant').count() === 0, 'Site pause prevents lookup');
     await page.evaluate(() => { setPrefs({ pausedSites: [], contextEnabled: true }); window.testHold = true; });
-    await select(page, '#reading', 'Mercury');
+    await select(page, '#reading', 'Mercury', true);
     const oldId = await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').at(-1).id);
-    await select(page, '#other', 'DSP');
+    await select(page, '#other', 'DSP', true);
     const newId = await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').at(-1).id);
     await page.evaluate(id => emitTest({ id, event: 'complete', text: 'STALE ANSWER', sources: [] }), oldId);
     check(!(await page.locator('explained-reader .assistant').textContent()).includes('STALE ANSWER'), 'Stale answer ignored');
@@ -139,29 +146,32 @@ async function select(page, selector, phrase) {
     check((await page.locator('explained-reader .assistant').textContent()).includes('The newest answer.'), 'Newest result accepted');
     await page.evaluate(() => { window.testHold = false; });
     await page.getByRole('tab', { name: 'News' }).click();
+    await page.getByRole('button', { name: 'Search news', exact: true }).click();
     await page.locator('explained-reader .news-story').first().waitFor();
     await page.getByRole('tab', { name: 'Explain' }).click();
     check((await page.locator('explained-reader .answer-copy').textContent()).includes('The newest answer.'), 'Explain response cached for current selection');
     await page.keyboard.press('Escape');
-    await page.evaluate(() => { window.testHold = false; window.testError = 'LOGIN_REQUIRED'; });
-    await select(page, '#reading', 'Mercury');
+    await page.evaluate(() => { window.testHold = false; window.testError = 'CONNECTION_UNAVAILABLE'; });
+    await select(page, '#reading', 'Mercury', true);
     await page.getByRole('button', { name: 'Open DeepSeek', exact: true }).waitFor();
-    check((await page.locator('explained-reader .assistant').textContent()).includes('Sign in'), 'Missing login has action');
+    check(!(await page.locator('explained-reader .assistant').textContent()).includes('Sign in'), 'Connection recovery does not require an account in its wording');
     await page.screenshot({ path: path.join(output, 'login-needed.png') });
     await page.keyboard.press('Escape');
     await page.setViewportSize({ width: 375, height: 667 });
     await page.evaluate(() => { window.testError = null; });
-    await select(page, '#bottom', 'Attribution');
+    await select(page, '#bottom', 'Attribution', true);
     await page.getByRole('button', { name: 'Explain a little more' }).waitFor();
     const box = await page.locator('explained-reader .assistant').boundingBox();
     check(box.x >= 0 && box.y >= 0 && box.x + box.width <= 375 && box.y + box.height <= 667, 'Small viewport and bottom selection');
     await page.screenshot({ path: path.join(output, 'small-viewport.png') });
     const popup = await context.newPage(); popup.on('pageerror', e => errors.push(e.message));
     await popup.addInitScript(mockChrome); await popup.goto(base + '/explained-extension/popup.html');
-    await popup.getByRole('button', { name: 'Enable and connect DeepSeek' }).click();
+    await popup.getByRole('button', { name: 'Enable lookups' }).click();
     await popup.waitForFunction(() => document.getElementById('consent-panel').hidden);
-    check(await popup.locator('#connection-status').textContent() === 'Session detected · checked on lookup', 'Popup connection status');
-    check(await popup.evaluate(() => testControlMessages.some(m => m.type === 'OPEN_CONNECTION')), 'Toolbar setup enables lookups and opens DeepSeek together');
+    check(await popup.locator('#connection-status').textContent() === 'Website connection ready', 'Popup connection status');
+    check(await popup.evaluate(() => !testControlMessages.some(m => m.type === 'OPEN_CONNECTION') && testMessages.length === 0), 'Toolbar opt-in neither opens DeepSeek nor sends text');
+    await popup.getByRole('button', { name: 'Open DeepSeek', exact: false }).click();
+    check(await popup.evaluate(() => testControlMessages.some(m => m.type === 'OPEN_CONNECTION')), 'Open DeepSeek is a separate explicit toolbar action');
     await popup.locator('#language').selectOption('zh-CN');
     await popup.waitForFunction(() => document.getElementById('language').value === 'zh-CN');
     await popup.getByRole('button', { name: 'Pause site', exact: true }).click();
@@ -176,9 +186,10 @@ async function select(page, selector, phrase) {
     }
     for (const layout of ['A', 'B', 'C']) {
       await freshSetup();
-      await setupPage.evaluate(layout => { setPrefs({ layout }); window.testError = 'LOGIN_REQUIRED'; window.testConnectionStatus = 'login'; window.pageClicks = 0; document.addEventListener('click', () => { window.pageClicks++; }); }, layout);
+      await setupPage.evaluate(layout => { setPrefs({ consent: true, layout }); window.testError = 'CONNECTION_UNAVAILABLE'; window.pageClicks = 0; document.addEventListener('click', () => { window.pageClicks++; }); }, layout);
       await select(setupPage, '#reading', 'Mercury');
-      await setupPage.getByRole('button', { name: 'Enable and explain' }).click();
+      check(await setupPage.evaluate(() => testMessages.length === 0), 'Selection stays local in layout: ' + layout);
+      await setupPage.locator('[data-action="request"]').click();
       await setupPage.getByRole('button', { name: 'Open DeepSeek', exact: true }).waitFor();
       check(await setupPage.evaluate(() => pageClicks === 0), 'Card buttons do not trigger page click handlers: ' + layout);
       if (layout === 'A') {
@@ -190,60 +201,48 @@ async function select(page, selector, phrase) {
       }
       await setupPage.getByRole('button', { name: 'Open DeepSeek', exact: true }).focus();
       await setupPage.keyboard.press('Enter');
-      await setupPage.getByText('Your highlight is saved and will continue automatically.', { exact: false }).waitFor();
-      await setupPage.evaluate(() => window.dispatchEvent(new Event('focus')));
+      await setupPage.evaluate(() => { window.testError = null; window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); });
       await setupPage.waitForTimeout(100);
-      check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Returning while signed out does not resubmit: ' + layout);
-      await setupPage.screenshot({ path: path.join(output, `sign-in-${layout.toLowerCase()}.png`) });
-      await setupPage.evaluate(() => { window.testError = null; window.testConnectionStatus = 'connected'; window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); });
+      check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Opening and returning never auto-submit: ' + layout);
+      await setupPage.screenshot({ path: path.join(output, `connection-${layout.toLowerCase()}.png`) });
+      await setupPage.getByRole('button', { name: 'Retry', exact: true }).click();
       await setupPage.getByRole('button', { name: 'Explain a little more' }).waitFor();
-      check(await setupPage.evaluate(() => { const lookups = testMessages.filter(m => m.type === 'LOOKUP'); return lookups.length === 2 && lookups[1].term === 'Mercury' && lookups[1].context === lookups[0].context; }), 'Sign-in resumes the saved highlight once: ' + layout);
+      check(await setupPage.evaluate(() => { const lookups = testMessages.filter(m => m.type === 'LOOKUP'); return lookups.length === 2 && lookups[1].term === 'Mercury' && lookups[1].context === lookups[0].context; }), 'Explicit retry submits the preserved selection once: ' + layout);
       await setupPage.keyboard.press('Escape');
     }
-    await freshSetup(); await select(setupPage, '#reading', 'Mercury');
-    await setupPage.getByRole('button', { name: 'Enable and explain' }).waitFor();
+    await freshSetup();
+    await select(setupPage, '#reading', 'Mercury');
     await setupPage.evaluate(() => setPrefs({ consent: true }));
-    await setupPage.getByRole('button', { name: 'Explain a little more' }).waitFor();
-    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Enabling from the toolbar continues an already-open consent card');
-    await freshSetup();
-    await setupPage.evaluate(() => { setPrefs({ consent: true }); window.testError = 'CONNECTION_FAILED'; });
-    await select(setupPage, '#reading', 'Mercury');
-    await setupPage.getByRole('button', { name: 'Open DeepSeek', exact: true }).click();
-    await setupPage.evaluate(() => { window.testError = null; window.dispatchEvent(new Event('focus')); });
     await setupPage.waitForTimeout(100);
-    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Generic request failures never resubmit on return');
-    await setupPage.getByRole('button', { name: 'Retry', exact: true }).click();
-    await setupPage.getByRole('button', { name: 'Explain a little more' }).waitFor();
-    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 2), 'Retry button submits the preserved highlight');
-    await freshSetup();
-    await setupPage.evaluate(() => { setPrefs({ consent: true }); window.testError = 'LOGIN_REQUIRED'; });
+    check(await setupPage.evaluate(() => testMessages.length === 0) && await setupPage.locator('explained-reader .assistant').count() === 0, 'Toolbar opt-in does not resume a previous selection');
     await select(setupPage, '#reading', 'Mercury');
-    await setupPage.getByRole('button', { name: 'Open DeepSeek', exact: true }).click();
-    await setupPage.evaluate(() => { window.testStatusHold = true; window.dispatchEvent(new Event('focus')); });
-    await setupPage.waitForFunction(() => typeof finishStatus === 'function');
+    await setupPage.getByRole('tab', { name: 'News' }).click();
+    check(await setupPage.evaluate(() => testMessages.length === 0), 'Choosing a tab does not send text');
+    await setupPage.getByRole('button', { name: 'Search news', exact: true }).click();
+    await setupPage.locator('.news-story').first().waitFor();
+    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Search news sends only after the explicit action');
     await setupPage.keyboard.press('Escape');
-    await setupPage.evaluate(() => finishStatus({ status: 'connected' }));
+    await setupPage.evaluate(() => { window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); });
     await setupPage.waitForTimeout(100);
-    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Closing the card prevents delayed sign-in probes from submitting');
+    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Closing and returning cannot submit hidden selections');
     await freshSetup();
     await setupPage.evaluate(() => { setPrefs({ consent: true }); window.testError = 'EXTENSION_RELOADED'; });
-    await select(setupPage, '#reading', 'Mercury');
+    await select(setupPage, '#reading', 'Mercury', true);
     await setupPage.getByRole('button', { name: 'Refresh page', exact: true }).waitFor();
-    check(await setupPage.getByRole('button', { name: 'Retry', exact: true }).count() === 0, 'Reloaded extensions offer page refresh instead of a broken retry');
+    check(await setupPage.getByRole('button', { name: 'Retry', exact: true }).count() === 0, 'Reloaded extensions offer refresh instead of a broken retry');
     await setupPage.setViewportSize({ width: 375, height: 667 });
     await freshSetup();
-    await setupPage.evaluate(() => { setPrefs({ layout: 'B', language: 'zh-TW' }); window.testError = 'LOGIN_REQUIRED'; window.testConnectionStatus = 'login'; });
-    await select(setupPage, '#reading', 'Mercury');
-    await setupPage.locator('[data-action="consent"]').click();
+    await setupPage.evaluate(() => { setPrefs({ consent: true, layout: 'B', language: 'zh-TW' }); window.testError = 'CONNECTION_UNAVAILABLE'; });
+    await select(setupPage, '#reading', 'Mercury', true);
     await setupPage.locator('[data-action="connection"]').waitFor();
     const setupBox = await setupPage.locator('explained-reader .assistant').boundingBox();
-    check(setupBox.x >= 0 && setupBox.y >= 0 && setupBox.x + setupBox.width <= 375 && setupBox.y + setupBox.height <= 667, 'First-use sign-in fits a small viewport');
+    check(setupBox.x >= 0 && setupBox.y >= 0 && setupBox.x + setupBox.width <= 375 && setupBox.y + setupBox.height <= 667, 'Connection recovery fits a small viewport');
     await setupPage.locator('[data-action="connection"]').click();
-    await setupPage.screenshot({ path: path.join(output, 'sign-in-small.png') });
-    await setupPage.evaluate(() => { window.testError = null; window.testConnectionStatus = 'connected'; });
+    await setupPage.screenshot({ path: path.join(output, 'connection-small.png') });
+    await setupPage.evaluate(() => { window.testError = null; });
     await setupPage.locator('[data-action="retry"]').click();
     await setupPage.locator('[data-action="more"]').waitFor();
-    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 2), 'Manual continue works on small screens in Traditional Chinese');
+    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 2), 'Explicit retry works on small screens in Traditional Chinese');
     check(errors.length === 0, 'No browser JavaScript errors: ' + errors.join(', '));
     fs.writeFileSync(path.join(output, 'ui-results.json'), JSON.stringify({ checks, passed: true, errors, scope: 'Localhost UI with controlled responses, not installed-extension or authenticated DeepSeek validation.' }, null, 2));
     console.log(`${checks} browser UI checks passed. Screenshots: validation/`);
