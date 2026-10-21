@@ -11,7 +11,7 @@
       const listener = event => {
         if (event.source !== window || event.origin !== location.origin || event.data?.channel !== 'EXPLAINED_DIRECT_OUTPUT_V1' || event.data.nonce !== nonce || event.data.event !== 'ready') return;
         cleanup();
-        resolve({ ready: true, version: '0.1.4', busy: !!active || event.data.busy === true });
+        resolve({ ready: true, version: '0.1.5', busy: !!active || event.data.busy === true });
       };
       const timer = setTimeout(() => { cleanup(); resolve({ ready: false }); }, 1500);
       window.addEventListener('message', listener);

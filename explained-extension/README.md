@@ -1,15 +1,15 @@
-# Explained 0.1.4
+# Explained 0.1.5
 
 A personal-use Chrome extension that explains highlighted webpage text through the DeepSeek website in your browser. This combines the direct POST connection from bridge 0.0.4 with the reading experience and toolbar panel from the two handoffs. No official paid model API, build step, or runtime dependency installation is needed.
 
 ## Install / update
 
-1. Unzip `explained-v0.1.4.zip` if using the packaged download.
+1. Unzip `explained-v0.1.5.zip` if using the packaged download.
 2. In Chrome, open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select **explained-extension**, the folder containing this file and `manifest.json`.
 3. If you previously installed **Highlight · DeepSeek bridge prototype**, disable it to avoid confusion. It is a separate connection harness.
 4. On first install, a local welcome window opens automatically. Read the sharing notice, choose nearby context, and select **Enable lookups**. The **You’re all set** screen shows how to try it. **Maybe later** closes setup without enabling. Setup never opens DeepSeek or submits text. If a window cannot open, the same setup appears in a local tab; updates do not reopen it. The toolbar remains available for later enabling and preferences.
-5. Refresh already-open reading pages, then highlight a phrase. The preview stays on the page until you choose **Explain selection**. Review nearby context or turn it off in the toolbar before sending.
-6. For news, choose **News**, then **Search news**. Open DeepSeek and Retry are separate explicit actions if the connection needs attention. Returning to the reading page never resubmits. Keep the DeepSeek tab open while answering; it can stay in the background.
+5. Refresh already-open reading pages, then highlight a phrase. Explain starts automatically, without another button click. The selected phrase and any enabled context are sent to DeepSeek. Turn context off or pause lookups globally or per site from the toolbar.
+6. Switch to **News** to search immediately, without a second confirmation. Open DeepSeek and Retry are separate explicit actions if the connection needs attention. Returning to the reading page never resubmits. Keep the DeepSeek tab open while answering; it can stay in the background.
 
 For later file updates, use **Reload** on the extension’s card in `chrome://extensions`, then refresh reading pages and close the old dedicated DeepSeek tab so a fresh helper environment can be created. Installation and reloading are manual; the agent did not operate Chrome’s protected extension manager.
 
@@ -18,7 +18,7 @@ For later file updates, use **Reload** on the extension’s card in `chrome://ex
 - **Explain:** progressive plain-text answer, two short sentences by default. **Explain a little more** requests a fuller answer with an example; **Keep it short** restores the concise answer.
 - **News:** live-search request for up to three distinct developments with event dates in the last 30 days. Exact duplicate summaries and out-of-window or invalid dates are filtered. Distinct-event deduplication also relies on the model’s requested behavior.
 - **Sources:** a story gets a clickable source only when its returned URL or explicit search citation number matches recognized structured search metadata. SEARCH, TOOL_SEARCH and TOOL_OPEN sources are decoded from both snapshots and incremental result patches. Unmatched stories are explicitly marked unverified. Unparseable News responses retain their text, and search sources are shown separately without claiming per-story correspondence. Model prose URLs never become source links by themselves.
-- **Setup and recovery:** only the welcome setup or toolbar can enable lookups. Highlighting, mode changes, enabling, and returning from DeepSeek never send text. **Explain selection**, **Search news**, expansion and **Retry** are explicit submission actions. Open DeepSeek stays responsive during connection startup. A reloaded extension offers **Refresh page**.
+- **Setup and recovery:** only the welcome setup or toolbar can enable lookups. Once enabled, highlighting starts Explain and switching modes starts that lookup immediately, reusing a completed result when available. Enabling itself and returning from DeepSeek do not submit text. Interrupted or rejected requests still require **Retry**. Open DeepSeek stays responsive during connection startup. A reloaded extension offers **Refresh page**.
 - **Dismiss:** Escape, the close button, or a click outside. Dismissal aborts the current lookup. A new selection supersedes the previous request; outdated events are ignored.
 - **Toolbar:** On / Paused, answer language, context sharing, current-site pause, session presence, and General coverage. Changes save locally. Language choices are English, Simplified Chinese and Traditional Chinese.
 - **Reading layout & connection details:** choose A (compact note, default), B (split card), or C (reading margin). All three preserve the prototype design. The default is an implementation choice, not a claim that a layout winner was approved.
@@ -54,7 +54,7 @@ These tests did **not** install this build into the user’s Chrome profile or c
 
 ## Installed-build check
 
-1. With no saved preferences, highlight before opening the toolbar: no card or request should appear. Enable in the toolbar: nothing should be submitted. Highlight again, inspect the preview, and choose **Explain selection**. Open DeepSeek if needed; returning must not submit until **Retry** is chosen.
+1. With no saved preferences, highlight before opening the toolbar: no card or request should appear. Enable in the toolbar: nothing should be submitted. Highlight again: Explain should start without another click. Switch to News: search should start immediately. Verify both global and site pause prevent requests. Open DeepSeek if needed; returning must not submit until **Retry** is chosen.
 2. Switch News on a current, well-covered subject. Open each source and compare event date, subject and summary. An unverified warning is expected when the stream exposes no matching structured source.
 3. Highlight another phrase before the first answer completes. Only the new phrase should receive a result. Dismiss during loading; no late answer should reopen the card.
 4. Change language and context sharing; Retry. Pause globally and per site; selections should stop opening cards.

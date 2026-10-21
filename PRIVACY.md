@@ -1,14 +1,14 @@
 # Privacy and permissions
 
-Updated 2026-10-21 for version 0.1.4.
+Updated 2026-10-22 for version 0.1.5.
 
 ## Data flow
 
-Lookups must first be explicitly enabled in the local welcome setup or toolbar. The welcome window opens on first install and may be skipped without enabling anything. Highlighting then creates a local preview. Only choosing **Explain selection**, **Search news**, expansion, or **Retry** sends the selected phrase and optional context through the extension to a dedicated DeepSeek tab. Enabling, switching modes, opening DeepSeek, and returning to the reading page do not submit text. That page submits the prompt to DeepSeek. DeepSeek returns the answer and, for News, any search metadata it exposes. Results are displayed beside the selection.
+Lookups must first be explicitly enabled in the local welcome setup or toolbar. The welcome window opens on first install and may be skipped without enabling anything. Once enabled, completing a supported text selection automatically sends the selected phrase and optional context through the extension to a dedicated DeepSeek tab for Explain. Switching to News starts a search immediately; switching back reuses a completed answer where available. Enabling itself, opening DeepSeek, and returning to the reading page do not submit text. DeepSeek returns the answer and, for News, any search metadata it exposes. Results are displayed beside the selection.
 
-The selected phrase is limited to 500 characters. Surrounding context is limited to 600 characters and aims to include the containing sentence and one adjacent sentence on each side. You can inspect it before sending with **Context to share** and disable it in the toolbar. Input fields, editable regions and hidden text are excluded where the supported page structure identifies them. Unusual editors or custom page structures may be unsupported.
+The selected phrase is limited to 500 characters. Surrounding context is limited to 600 characters and aims to include the containing sentence and one adjacent sentence on each side. You can inspect it with **Context used** and disable sharing before highlighting using the toolbar. Input fields, editable regions and hidden text are excluded where the supported page structure identifies them. Unusual editors or custom page structures may be unsupported.
 
-No lookup is sent before the sharing notice is accepted. News is requested only after **Search news** is chosen. The implementation sends the selected text and optional context to DeepSeek; it does not send the full reading page, reading-page URL, browsing history or a cookie export as prompt fields to a developer-operated service.
+No lookup is sent before the sharing notice is accepted. News is requested when you switch to the News tab. The implementation sends the selected text and optional context to DeepSeek; it does not send the full reading page, reading-page URL, browsing history or a cookie export as prompt fields to a developer-operated service.
 
 ## Where data is stored
 
@@ -24,7 +24,7 @@ Explained includes no analytics, advertising or developer-operated backend. Each
 
 ## Permissions and requests
 
-- **HTTP/HTTPS site access:** detects selections and displays the card on ordinary pages. Pause stops selection previews and lookups; it does not revoke Chrome’s permission. Chrome’s site-access settings can restrict that permission.
+- **HTTP/HTTPS site access:** detects selections and displays the card on ordinary pages. Pause stops selection cards and lookups; it does not revoke Chrome’s permission. Chrome’s site-access settings can restrict that permission.
 - **storage:** saves preferences and the temporary connection-tab ID.
 - **DeepSeek website requests:** session creation, a fresh work challenge and completion, all from the website page to its own origin. Requests do not redirect authentication to another host.
 - **Official solver asset:** a public WASM asset is loaded from DeepSeek’s site or its official static host. Static downloads omit credentials. This is a separate distribution-policy consideration documented in the README.
@@ -33,6 +33,6 @@ The manifest does not request cookie export, browsing history, debugger or nativ
 
 ## Your controls
 
-Pause globally, pause a hostname, disable context, close the card to cancel, restrict extension site access, or remove the extension. Pausing does not delete existing DeepSeek conversations. Review each selection and any nearby context before choosing a lookup action. Do not submit sensitive content you do not want sent to DeepSeek.
+Pause globally, pause a hostname, disable context, close the card to cancel, restrict extension site access, or remove the extension. Pausing does not delete existing DeepSeek conversations. Pause lookups globally or for the current site before selecting sensitive content you do not want sent to DeepSeek. You can also turn context sharing off before highlighting.
 
 Third-party handling is described in [DeepSeek’s privacy policy](https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html). Report privacy-related defects through [SECURITY.md](SECURITY.md).

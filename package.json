@@ -1,6 +1,6 @@
 {
   "name": "explained-chrome-extension",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "description": "Understand highlighted text in context with a small reading companion for Chrome.",
   "license": "MIT",

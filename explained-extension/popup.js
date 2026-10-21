@@ -39,7 +39,7 @@ async function init() {
   render(); void connectionStatus();
 }
 $('enabled').onclick = () => save(current => ({ ...current, enabled: !current.enabled }));
-$('consent').onclick = async () => { if (await save({ consent: true, enabled: true })) $('feedback').textContent = 'You’re all set. Highlight a phrase, then choose Explain or News when you want to send it.'; };
+$('consent').onclick = async () => { if (await save({ consent: true, enabled: true })) $('feedback').textContent = 'You’re all set. Highlight a phrase for an automatic explanation, or switch to News for recent developments.'; };
 $('language').onchange = event => { const language = event.target.value; void save({ language }); };
 $('layout').onchange = event => { const layout = event.target.value; void save({ layout }); };
 $('context').onchange = event => { const contextEnabled = event.target.checked; void save({ contextEnabled }); };
@@ -50,7 +50,7 @@ async function openConnection() {
   try {
     const result = await chrome.runtime.sendMessage({ type: 'OPEN_CONNECTION' });
     if (!result?.ok) throw new Error('OPEN_FAILED');
-    $('feedback').textContent = 'DeepSeek opened. Return to your reading and choose Explain, Search news or Retry when you’re ready.';
+    $('feedback').textContent = 'DeepSeek opened. Return to your reading and choose Retry for an interrupted lookup, or highlight a new phrase.';
   } catch { $('feedback').textContent = 'Could not open DeepSeek. Try again, or reload the extension and refresh your reading page.'; }
   finally { $('connection').disabled = false; }
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5 — 2026-10-22
+
+- Remove per-selection confirmation: highlighting starts Explain after lookups are enabled, and switching to News starts search immediately.
+- Preserve first-use consent, global/site pause, context controls, cancellation, and completed-answer caching. Returning from DeepSeek does not retry interrupted requests.
+- Update setup and privacy copy to explain automatic submissions after enabling.
+
 ## 0.1.4 — 2026-10-21
 
 - Open a skippable local welcome window on first install, with tab fallback. Updates do not reopen it.

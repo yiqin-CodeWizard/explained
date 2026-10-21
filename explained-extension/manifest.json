@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Explained",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "minimum_chrome_version": "114",
   "description": "Understand highlighted text and explore recent news using the DeepSeek website.",
   "permissions": [

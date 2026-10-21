@@ -53,7 +53,7 @@ function mockChrome() {
   window.emitTest = message => incoming.forEach(fn => fn(message));
   window.setPrefs = patch => window.chrome.storage.local.set({ settings: { ...data.settings, ...patch } });
 }
-async function select(page, selector, phrase, request = false) {
+async function select(page, selector, phrase) {
   await page.locator(selector).scrollIntoViewIfNeeded();
   await page.evaluate(({ selector, phrase }) => {
     const element = document.querySelector(selector), node = element.firstChild, start = node.textContent.indexOf(phrase);
@@ -62,7 +62,6 @@ async function select(page, selector, phrase, request = false) {
     element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0 }));
   }, { selector, phrase });
   await page.waitForTimeout(280);
-  if (request) await page.locator('[data-action="request"]').click();
 }
 (async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -82,11 +81,10 @@ async function select(page, selector, phrase, request = false) {
     await page.evaluate(() => setPrefs({ consent: true }));
     check(await page.evaluate(() => testMessages.length === 0), 'Enabling alone never submits the earlier highlight');
     await select(page, '#reading', 'Mercury');
-    await page.getByRole('button', { name: 'Explain selection', exact: true }).waitFor();
-    await page.screenshot({ path: path.join(output, 'first-highlight.png') });
-    check(await page.evaluate(() => testMessages.length === 0), 'Highlighting after opt-in still requires an explicit action');
-    await page.getByRole('button', { name: 'Explain selection', exact: true }).click();
     await page.getByRole('button', { name: 'Explain a little more' }).waitFor();
+    await page.screenshot({ path: path.join(output, 'first-highlight.png') });
+    check(await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Highlight after opt-in automatically submits Explain once');
+    check(await page.locator('[data-action="request"]').count() === 0, 'Explain has no extra confirmation button');
     const sent = await page.evaluate(() => testMessages.find(m => m.type === 'LOOKUP'));
     check(sent.term === 'Mercury' && sent.context.includes('smallest planet') && sent.context.length <= 600, 'Selection and context contract');
     check(!sent.context.includes('HIDDEN_PRIVATE_CONTEXT'), 'Hidden page content excluded from context');
@@ -97,7 +95,7 @@ async function select(page, selector, phrase, request = false) {
     });
     await page.waitForTimeout(280);
     check(await page.locator('explained-reader .assistant').count() === 0, 'Outside click with unchanged selection does not reopen card');
-    await select(page, '#reading', 'Mercury', true);
+    await select(page, '#reading', 'Mercury');
     await page.getByRole('button', { name: 'Explain a little more' }).waitFor();
     await page.getByRole('button', { name: '+ Context used' }).click();
     check((await page.locator('explained-reader .context-block').textContent()).includes('Mercury'), 'Context disclosure');
@@ -110,13 +108,18 @@ async function select(page, selector, phrase, request = false) {
     await page.getByRole('button', { name: 'Keep it short' }).waitFor();
     check((await page.locator('explained-reader .answer-copy').textContent()).includes('For example'), 'Expanded explanation uses actual request');
     await page.getByRole('tab', { name: 'News' }).click();
-    await page.getByRole('button', { name: 'Search news', exact: true }).click();
     await page.locator('explained-reader .news-story').first().waitFor();
     check(await page.locator('explained-reader .news-story').count() === 2, 'Parsed stories rendered');
     check(await page.locator('explained-reader a').count() === 1, 'Only structured source URL becomes link');
     check(await page.locator('explained-reader .news-story').first().locator('a').getAttribute('href') === 'https://example.org/research', 'Citation ID resolves to the original source URL');
     check(await page.locator('explained-reader .news-story').first().locator('.notice').count() === 0, 'Matched story has no missing-source warning');
     check((await page.locator('explained-reader .assistant').textContent()).includes('unverified'), 'Missing source warning');
+    const newsRequests = await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length);
+    await page.getByRole('tab', { name: 'News' }).focus();
+    await page.keyboard.press('Home');
+    await page.getByRole('tab', { name: 'Explain' }).waitFor();
+    await page.keyboard.press('End');
+    check(await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length) === newsRequests, 'Keyboard mode switching reuses completed answers without duplicate requests');
     await page.screenshot({ path: path.join(output, 'news.png') });
     for (const layout of ['B', 'C']) {
       await page.evaluate(layout => setPrefs({ layout }), layout);
@@ -136,10 +139,14 @@ async function select(page, selector, phrase, request = false) {
     await page.evaluate(() => setPrefs({ pausedSites: ['127.0.0.1'] }));
     await select(page, '#reading', 'Mercury');
     check(await page.locator('explained-reader .assistant').count() === 0, 'Site pause prevents lookup');
-    await page.evaluate(() => { setPrefs({ pausedSites: [], contextEnabled: true }); window.testHold = true; });
-    await select(page, '#reading', 'Mercury', true);
+    const pausedRequests = await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length);
+    await page.evaluate(() => setPrefs({ enabled: false, pausedSites: [] }));
+    await select(page, '#reading', 'Mercury');
+    check(await page.locator('explained-reader .assistant').count() === 0 && await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length) === pausedRequests, 'Global pause prevents automatic explanation');
+    await page.evaluate(() => { setPrefs({ enabled: true, pausedSites: [], contextEnabled: true }); window.testHold = true; });
+    await select(page, '#reading', 'Mercury');
     const oldId = await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').at(-1).id);
-    await select(page, '#other', 'DSP', true);
+    await select(page, '#other', 'DSP');
     const newId = await page.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').at(-1).id);
     await page.evaluate(id => emitTest({ id, event: 'complete', text: 'STALE ANSWER', sources: [] }), oldId);
     check(!(await page.locator('explained-reader .assistant').textContent()).includes('STALE ANSWER'), 'Stale answer ignored');
@@ -147,20 +154,19 @@ async function select(page, selector, phrase, request = false) {
     check((await page.locator('explained-reader .assistant').textContent()).includes('The newest answer.'), 'Newest result accepted');
     await page.evaluate(() => { window.testHold = false; });
     await page.getByRole('tab', { name: 'News' }).click();
-    await page.getByRole('button', { name: 'Search news', exact: true }).click();
     await page.locator('explained-reader .news-story').first().waitFor();
     await page.getByRole('tab', { name: 'Explain' }).click();
     check((await page.locator('explained-reader .answer-copy').textContent()).includes('The newest answer.'), 'Explain response cached for current selection');
     await page.keyboard.press('Escape');
     await page.evaluate(() => { window.testHold = false; window.testError = 'CONNECTION_UNAVAILABLE'; });
-    await select(page, '#reading', 'Mercury', true);
+    await select(page, '#reading', 'Mercury');
     await page.getByRole('button', { name: 'Open DeepSeek', exact: true }).waitFor();
     check(!(await page.locator('explained-reader .assistant').textContent()).includes('Sign in'), 'Connection recovery does not require an account in its wording');
     await page.screenshot({ path: path.join(output, 'login-needed.png') });
     await page.keyboard.press('Escape');
     await page.setViewportSize({ width: 375, height: 667 });
     await page.evaluate(() => { window.testError = null; });
-    await select(page, '#bottom', 'Attribution', true);
+    await select(page, '#bottom', 'Attribution');
     await page.getByRole('button', { name: 'Explain a little more' }).waitFor();
     const box = await page.locator('explained-reader .assistant').boundingBox();
     check(box.x >= 0 && box.y >= 0 && box.x + box.width <= 375 && box.y + box.height <= 667, 'Small viewport and bottom selection');
@@ -189,8 +195,7 @@ async function select(page, selector, phrase, request = false) {
       await freshSetup();
       await setupPage.evaluate(layout => { setPrefs({ consent: true, layout }); window.testError = 'CONNECTION_UNAVAILABLE'; window.pageClicks = 0; document.addEventListener('click', () => { window.pageClicks++; }); }, layout);
       await select(setupPage, '#reading', 'Mercury');
-      check(await setupPage.evaluate(() => testMessages.length === 0), 'Selection stays local in layout: ' + layout);
-      await setupPage.locator('[data-action="request"]').click();
+      check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Highlight starts Explain without another click in layout: ' + layout);
       await setupPage.getByRole('button', { name: 'Open DeepSeek', exact: true }).waitFor();
       check(await setupPage.evaluate(() => pageClicks === 0), 'Card buttons do not trigger page click handlers: ' + layout);
       if (layout === 'A') {
@@ -218,23 +223,22 @@ async function select(page, selector, phrase, request = false) {
     check(await setupPage.evaluate(() => testMessages.length === 0) && await setupPage.locator('explained-reader .assistant').count() === 0, 'Toolbar opt-in does not resume a previous selection');
     await select(setupPage, '#reading', 'Mercury');
     await setupPage.getByRole('tab', { name: 'News' }).click();
-    check(await setupPage.evaluate(() => testMessages.length === 0), 'Choosing a tab does not send text');
-    await setupPage.getByRole('button', { name: 'Search news', exact: true }).click();
     await setupPage.locator('.news-story').first().waitFor();
-    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Search news sends only after the explicit action');
+    check(await setupPage.evaluate(() => { const calls = testMessages.filter(m => m.type === 'LOOKUP'); return calls.length === 2 && calls[0].mode === 'explain' && calls[1].mode === 'news'; }), 'Switching to News searches immediately without another confirmation');
+    check(await setupPage.locator('[data-action="request"]').count() === 0, 'News has no extra confirmation button');
     await setupPage.keyboard.press('Escape');
     await setupPage.evaluate(() => { window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); });
     await setupPage.waitForTimeout(100);
-    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 1), 'Closing and returning cannot submit hidden selections');
+    check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 2), 'Closing and returning cannot submit hidden selections');
     await freshSetup();
     await setupPage.evaluate(() => { setPrefs({ consent: true }); window.testError = 'EXTENSION_RELOADED'; });
-    await select(setupPage, '#reading', 'Mercury', true);
+    await select(setupPage, '#reading', 'Mercury');
     await setupPage.getByRole('button', { name: 'Refresh page', exact: true }).waitFor();
     check(await setupPage.getByRole('button', { name: 'Retry', exact: true }).count() === 0, 'Reloaded extensions offer refresh instead of a broken retry');
     await setupPage.setViewportSize({ width: 375, height: 667 });
     await freshSetup();
     await setupPage.evaluate(() => { setPrefs({ consent: true, layout: 'B', language: 'zh-TW' }); window.testError = 'CONNECTION_UNAVAILABLE'; });
-    await select(setupPage, '#reading', 'Mercury', true);
+    await select(setupPage, '#reading', 'Mercury');
     await setupPage.locator('[data-action="connection"]').waitFor();
     const setupBox = await setupPage.locator('explained-reader .assistant').boundingBox();
     check(setupBox.x >= 0 && setupBox.y >= 0 && setupBox.x + setupBox.width <= 375 && setupBox.y + setupBox.height <= 667, 'Connection recovery fits a small viewport');

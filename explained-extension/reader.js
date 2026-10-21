@@ -45,8 +45,11 @@
     shadow.addEventListener('keydown', event => {
       if (event.key === 'Escape') { event.stopPropagation(); close(true); }
       if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key) && event.target.matches('[role="tab"]')) {
-        event.preventDefault(); state.mode = event.target.dataset.mode === 'explain' ? 'news' : 'explain';
-        state.detail = false; showSelection(); shadow.querySelector(`[data-mode="${state.mode}"]`)?.focus();
+        event.preventDefault();
+        const next = event.key === 'Home' ? 'explain' : event.key === 'End' ? 'news' : state.mode === 'explain' ? 'news' : 'explain';
+        if (next === state.mode) return;
+        state.mode = next; state.detail = false;
+        void lookup(); shadow.querySelector(`[data-mode="${state.mode}"]`)?.focus();
       }
     });
     document.documentElement.append(host);
@@ -147,13 +150,7 @@
     lastFocus = document.activeElement;
     rangeForPosition = range.cloneRange();
     Object.assign(state, { open: true, term, capturedContext: context, context: prefs.contextEnabled ? context : '', mode: 'explain', detail: false, contextOpen: false });
-    showSelection();
-  }
-  function showSelection() {
-    stop(); connectionNotice = '';
-    const cached = state.cache.get(cacheKey());
-    Object.assign(state, cached || { text: '', sources: [] }, { phase: cached ? 'ready' : 'selection', code: '' });
-    render();
+    void lookup();
   }
   function sourceLinks(sources) {
     return sources.flatMap(s => {
@@ -162,7 +159,6 @@
     }).join('');
   }
   function answer() {
-    if (state.phase === 'selection') return `<div class="empty-state setup-state"><h3>${text('Ready when you are','准备好时再开始','準備好時再開始')}</h3><p>${text('Highlighting keeps the text on this page. Choose an action to send this selection to DeepSeek.','划词不会发送文字。点击下方按钮才会将此次选择发送至 DeepSeek。','劃詞不會傳送文字。點擊下方按鈕才會將此次選擇傳送至 DeepSeek。')}</p><div class="setup-actions"><button class="primary-action" data-action="request">${state.mode === 'news' ? text('Search news','搜索新闻','搜尋新聞') : text('Explain selection','解释所选文字','解釋所選文字')}</button></div><p class="setup-hint">${prefs.contextEnabled ? text('Includes nearby context. Review it below or turn it off in the toolbar.','将包含附近上下文。可在下方查看，或在工具栏中关闭。','將包含附近上下文。可在下方查看，或在工具列中關閉。') : text('Only the selected phrase will be sent.','仅发送所选文字。','僅傳送所選文字。')}</p></div>`;
     const waiting = ['connecting', 'loading', 'streaming'].includes(state.phase);
     const loading = waiting ? `<p class="loading-label" role="status"><i></i>${state.phase === 'connecting' ? text('Connecting to DeepSeek…','正在连接 DeepSeek…') : state.mode === 'news' ? text('Searching recent coverage…','正在搜索近期报道…') : text('Finding the meaning in context…','正在结合语境解释…')}</p>` : '';
     let body = '';
@@ -193,7 +189,7 @@
     return `<div class="answer-tabs" role="tablist" aria-label="Answer type">${['explain', 'news'].map(mode => `<button role="tab" tabindex="${state.mode === mode ? '0' : '-1'}" aria-selected="${state.mode === mode}" data-mode="${mode}" class="${state.mode === mode ? 'active' : ''}">${mode === 'explain' ? text('Explain','解释','解釋') : text('News','新闻','新聞')} ${mode === 'news' ? '↗' : ''}</button>`).join('')}</div>`;
   }
   function contextBlock() {
-    return `<button class="context-toggle" data-action="context" aria-expanded="${state.contextOpen}">${state.contextOpen ? '−' : '+'} ${state.phase === 'selection' ? text('Context to share','将分享的上下文','將分享的上下文') : text('Context used','使用的上下文')}</button>${state.contextOpen ? `<div class="context-block">${esc(prefs.contextEnabled ? state.context : text('Context sharing is off. Only the selected text is sent.','上下文分享已关闭，仅发送所选文字。'))}</div>` : ''}`;
+    return `<button class="context-toggle" data-action="context" aria-expanded="${state.contextOpen}">${state.contextOpen ? '−' : '+'} ${text('Context used','使用的上下文')}</button>${state.contextOpen ? `<div class="context-block">${esc(prefs.contextEnabled ? state.context : text('Context sharing is off. Only the selected text is sent.','上下文分享已关闭，仅发送所选文字。'))}</div>` : ''}`;
   }
   function render() {
     if (!host && !state.open) return;
@@ -206,7 +202,7 @@
     if (!state.open || !allowed()) { root.replaceChildren(); return; }
     const closeButton = `<button class="icon-btn" data-action="close" aria-label="${text('Close answer','关闭回答')}">×</button>`;
     const title = `<h2>${esc(state.term)}</h2><div class="meaning">${text('Selected phrase · in context','所选短语 · 结合语境')}</div>`;
-    const footer = `<div class="card-footer"><span>DeepSeek · ${state.phase === 'selection' ? text('Not sent','尚未发送','尚未傳送') : text('AI response','AI 回答')}</span><span>${esc(Explained.languages[prefs.language])} · ${text('General','通用')}</span></div>`;
+    const footer = `<div class="card-footer"><span>DeepSeek · ${text('AI response','AI 回答')}</span><span>${esc(Explained.languages[prefs.language])} · ${text('General','通用')}</span></div>`;
     const content = answer();
     let html;
     if (prefs.layout === 'B') html = `<section class="assistant variant-b" role="region" aria-label="Explained"><div class="split-context"><span class="identity">e. &nbsp; EXPLAINED</span>${title}<span class="context-label">${text('IN THIS CONTEXT','在此语境中')}</span><div class="context-block">${esc(prefs.contextEnabled ? state.context : text('Context sharing off','上下文分享已关闭'))}</div><span class="small-tag">${text('A little more understanding','多理解一点')}</span></div><div class="split-answer"><div class="split-top"><span>EXPLAINED</span>${closeButton}</div>${tabs()}${content}${footer}</div></section>`;
@@ -235,13 +231,12 @@
     if (!target || target.disabled) return;
     if (target.dataset.mode) {
       if (state.mode === target.dataset.mode) return;
-      state.mode = target.dataset.mode; state.detail = false; showSelection(); return;
+      state.mode = target.dataset.mode; state.detail = false; await lookup(); return;
     }
     const action = target.dataset.action;
     if (action === 'close') close(true);
     if (action === 'context') { state.contextOpen = !state.contextOpen; render(); }
     if (action === 'more') { state.detail = !state.detail; await lookup(); }
-    if (action === 'request') await lookup();
     if (action === 'retry') await lookup(true);
     if (action === 'refresh') location.reload();
     if (action === 'connection') {
