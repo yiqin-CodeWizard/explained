@@ -1,0 +1,16 @@
+{
+  "name": "explained-chrome-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Understand highlighted text in context with a small reading companion for Chrome.",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/yiqin-CodeWizard/explained.git" },
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test tests/contracts.test.cjs tests/bridge.test.cjs",
+    "test:ui": "node tests/ui.test.cjs",
+    "check": "node tools/check.cjs",
+    "package": "python3 tools/package.py"
+  },
+  "devDependencies": { "playwright": "1.62.1" }
+}

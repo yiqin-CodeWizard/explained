@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a reproducible problem with synthetic or non-sensitive details.
+body:
+  - type: markdown
+    attributes:
+      value: Do not include tokens, cookies, authorization headers, proofs, raw network dumps or private chats. For a vulnerability, follow SECURITY.md.
+  - type: input
+    id: versions
+    attributes:
+      label: Chrome and Explained versions
+      placeholder: Chrome version / Explained 0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Use a public page or synthetic example. Say whether this affects Explain or News.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: input
+    id: error
+    attributes:
+      label: Error code, if shown
+      description: The short code only; no private headers or raw response bodies.

@@ -1,0 +1,41 @@
+name: Validate extension
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui
+      - run: npm run package
+      - uses: actions/upload-artifact@v7
+        with:
+          name: explained-preview
+          path: |
+            explained-v*.zip
+            explained-v*.zip.sha256
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: controlled-ui-results
+          path: validation/
+          if-no-files-found: ignore

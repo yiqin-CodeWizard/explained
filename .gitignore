@@ -1,0 +1,22 @@
+.DS_Store
+Thumbs.db
+node_modules/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+__pycache__/
+*.pyc
+*.zip
+*.sha256
+test-results/
+playwright-report/
+.auth/
+auth.json
+storageState*.json
+
+# Personal experiments and generated evidence remain local.
+deepseek-bridge-prototype/
+validation/
