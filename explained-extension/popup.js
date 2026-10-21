@@ -39,7 +39,7 @@ async function init() {
   render(); void connectionStatus();
 }
 $('enabled').onclick = () => save(current => ({ ...current, enabled: !current.enabled }));
-$('consent').onclick = async () => { if (await save({ consent: true, enabled: true })) $('feedback').textContent = 'Lookups enabled. Highlight a phrase, then choose Explain or News when you want to send it.'; };
+$('consent').onclick = async () => { if (await save({ consent: true, enabled: true })) $('feedback').textContent = 'You’re all set. Highlight a phrase, then choose Explain or News when you want to send it.'; };
 $('language').onchange = event => { const language = event.target.value; void save({ language }); };
 $('layout').onchange = event => { const layout = event.target.value; void save({ layout }); };
 $('context').onchange = event => { const contextEnabled = event.target.checked; void save({ contextEnabled }); };

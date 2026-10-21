@@ -1,10 +1,10 @@
 # Privacy and permissions
 
-Updated 2026-10-21 for version 0.1.3.
+Updated 2026-10-21 for version 0.1.4.
 
 ## Data flow
 
-Lookups must first be enabled in the toolbar. Highlighting then creates a local preview. Only choosing **Explain selection**, **Search news**, expansion, or **Retry** sends the selected phrase and optional context through the extension to a dedicated DeepSeek tab. Enabling, switching modes, opening DeepSeek, and returning to the reading page do not submit text. That page submits the prompt to DeepSeek. DeepSeek returns the answer and, for News, any search metadata it exposes. Results are displayed beside the selection.
+Lookups must first be explicitly enabled in the local welcome setup or toolbar. The welcome window opens on first install and may be skipped without enabling anything. Highlighting then creates a local preview. Only choosing **Explain selection**, **Search news**, expansion, or **Retry** sends the selected phrase and optional context through the extension to a dedicated DeepSeek tab. Enabling, switching modes, opening DeepSeek, and returning to the reading page do not submit text. That page submits the prompt to DeepSeek. DeepSeek returns the answer and, for News, any search metadata it exposes. Results are displayed beside the selection.
 
 The selected phrase is limited to 500 characters. Surrounding context is limited to 600 characters and aims to include the containing sentence and one adjacent sentence on each side. You can inspect it before sending with **Context to share** and disable it in the toolbar. Input fields, editable regions and hidden text are excluded where the supported page structure identifies them. Unusual editors or custom page structures may be unsupported.
 

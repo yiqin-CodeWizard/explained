@@ -62,14 +62,15 @@ function event() {
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));
 async function settle() { for (let i = 0; i < 12; i++) await tick(); }
-function background({ login = true, holdSettings = false, orphan = false, holdPing = false } = {}) {
+function background({ login = true, holdSettings = false, orphan = false, holdPing = false, rejectWelcomeWindow = false } = {}) {
   const calls = [], local = { settings: { consent: true } }, session = {};
   let releaseSettings;
   const gate = holdSettings ? new Promise(resolve => { releaseSettings = resolve; }) : Promise.resolve();
   let releasePing;
   const pingGate = holdPing ? new Promise(resolve => { releasePing = resolve; }) : Promise.resolve();
   const chrome = {
-    runtime: { id: 'test', getURL: p => `chrome-extension://test/${p}`, onConnect: event(), onMessage: event() },
+    runtime: { id: 'test', getURL: p => `chrome-extension://test/${p}`, onConnect: event(), onMessage: event(), onInstalled: event() },
+    windows: { create: async options => { calls.push(['window', options]); if (rejectWelcomeWindow) throw new Error('Unavailable'); return { id: 99 }; } },
     storage: { local: { get: async () => { await gate; return local; } }, session: { get: async () => session, set: async data => Object.assign(session, data) }, onChanged: event() },
     tabs: {
       create: async options => { calls.push(['create', options]); return { id: 42 }; },
@@ -88,6 +89,26 @@ function background({ login = true, holdSettings = false, orphan = false, holdPi
   const request = message => new Promise(resolve => chrome.runtime.onMessage.fire(message, { id: 'test', url: 'chrome-extension://test/popup.html' }, resolve));
   return { chrome, port, calls, lookup, complete, local, releaseSettings, releasePing, request };
 }
+test('first install opens only local setup; updates and browser updates do not reopen it', async () => {
+  const env = background();
+  env.local.settings.consent = false;
+  env.chrome.runtime.onInstalled.fire({ reason: 'install' }); await settle();
+  assert.equal(env.calls.length, 1);
+  assert.equal(env.calls[0][0], 'window');
+  assert.equal(env.calls[0][1].type, 'popup');
+  assert.equal(env.calls[0][1].url, 'chrome-extension://test/welcome.html');
+  assert.equal(env.local.settings.consent, false, 'Opening welcome never enables sharing');
+  env.chrome.runtime.onInstalled.fire({ reason: 'update' });
+  env.chrome.runtime.onInstalled.fire({ reason: 'chrome_update' }); await settle();
+  assert.equal(env.calls.length, 1);
+});
+test('first-install setup falls back to a local tab if its popup cannot open', async () => {
+  const env = background({ rejectWelcomeWindow: true });
+  env.chrome.runtime.onInstalled.fire({ reason: 'install' }); await settle();
+  assert.equal(env.calls.length, 2);
+  assert.equal(env.calls[1][0], 'create');
+  assert.equal(env.calls[1][1].url, 'chrome-extension://test/welcome.html');
+});
 test('Open DeepSeek stays responsive while a lookup waits for the website', async () => {
   const env = background({ holdPing: true }); env.lookup('one'); await settle();
   assert.ok(env.calls.some(c => c[1]?.type === 'EX_PING'));

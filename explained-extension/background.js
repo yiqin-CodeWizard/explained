@@ -10,6 +10,14 @@ const send = (port, message) => { try { port.postMessage(message); } catch { /* 
 const storedSettings = async () => Explained.settings((await chrome.storage.local.get('settings')).settings);
 const isReader = sender => sender.id === chrome.runtime.id && sender.tab && sender.frameId === 0 && /^https?:\/\//.test(sender.url || '') && new URL(sender.url).origin !== 'https://chat.deepseek.com';
 
+chrome.runtime.onInstalled.addListener(details => {
+  if (details.reason !== 'install') return;
+  const url = chrome.runtime.getURL('welcome.html');
+  // A local extension window works without a toolbar gesture or extra permissions.
+  void chrome.windows.create({ url, type: 'popup', width: 520, height: 740, focused: true })
+    .catch(() => chrome.tabs.create({ url, active: true }).catch(() => {}));
+});
+
 // Tab creation has its own lock. Opening DeepSeek must not wait behind a lookup
 // that is itself waiting for the website to become ready.
 function connectionTab(create = true, foreground = false) {

@@ -1,13 +1,13 @@
-# Explained 0.1.3
+# Explained 0.1.4
 
 A personal-use Chrome extension that explains highlighted webpage text through the DeepSeek website in your browser. This combines the direct POST connection from bridge 0.0.4 with the reading experience and toolbar panel from the two handoffs. No official paid model API, build step, or runtime dependency installation is needed.
 
 ## Install / update
 
-1. Unzip `explained-v0.1.3.zip` if using the packaged download.
+1. Unzip `explained-v0.1.4.zip` if using the packaged download.
 2. In Chrome, open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select **explained-extension**, the folder containing this file and `manifest.json`.
 3. If you previously installed **Highlight · DeepSeek bridge prototype**, disable it to avoid confusion. It is a separate connection harness.
-4. Pin **Explained** in Chrome’s Extensions menu. Read the sharing notice in the toolbar and choose **Enable lookups** deliberately. Highlighting before this does not open a card or send text. Enabling does not submit earlier selections or open DeepSeek.
+4. On first install, a local welcome window opens automatically. Read the sharing notice, choose nearby context, and select **Enable lookups**. The **You’re all set** screen shows how to try it. **Maybe later** closes setup without enabling. Setup never opens DeepSeek or submits text. If a window cannot open, the same setup appears in a local tab; updates do not reopen it. The toolbar remains available for later enabling and preferences.
 5. Refresh already-open reading pages, then highlight a phrase. The preview stays on the page until you choose **Explain selection**. Review nearby context or turn it off in the toolbar before sending.
 6. For news, choose **News**, then **Search news**. Open DeepSeek and Retry are separate explicit actions if the connection needs attention. Returning to the reading page never resubmits. Keep the DeepSeek tab open while answering; it can stay in the background.
 
@@ -18,7 +18,7 @@ For later file updates, use **Reload** on the extension’s card in `chrome://ex
 - **Explain:** progressive plain-text answer, two short sentences by default. **Explain a little more** requests a fuller answer with an example; **Keep it short** restores the concise answer.
 - **News:** live-search request for up to three distinct developments with event dates in the last 30 days. Exact duplicate summaries and out-of-window or invalid dates are filtered. Distinct-event deduplication also relies on the model’s requested behavior.
 - **Sources:** a story gets a clickable source only when its returned URL or explicit search citation number matches recognized structured search metadata. SEARCH, TOOL_SEARCH and TOOL_OPEN sources are decoded from both snapshots and incremental result patches. Unmatched stories are explicitly marked unverified. Unparseable News responses retain their text, and search sources are shown separately without claiming per-story correspondence. Model prose URLs never become source links by themselves.
-- **Setup and recovery:** only the toolbar can enable lookups. Highlighting, mode changes, enabling, and returning from DeepSeek never send text. **Explain selection**, **Search news**, expansion and **Retry** are explicit submission actions. Open DeepSeek stays responsive during connection startup. A reloaded extension offers **Refresh page**.
+- **Setup and recovery:** only the welcome setup or toolbar can enable lookups. Highlighting, mode changes, enabling, and returning from DeepSeek never send text. **Explain selection**, **Search news**, expansion and **Retry** are explicit submission actions. Open DeepSeek stays responsive during connection startup. A reloaded extension offers **Refresh page**.
 - **Dismiss:** Escape, the close button, or a click outside. Dismissal aborts the current lookup. A new selection supersedes the previous request; outdated events are ignored.
 - **Toolbar:** On / Paused, answer language, context sharing, current-site pause, session presence, and General coverage. Changes save locally. Language choices are English, Simplified Chinese and Traditional Chinese.
 - **Reading layout & connection details:** choose A (compact note, default), B (split card), or C (reading margin). All three preserve the prototype design. The default is an implementation choice, not a claim that a layout winner was approved.
@@ -47,7 +47,7 @@ The direct route uses the website’s undocumented session/challenge/completion 
 On 2026-10-21:
 
 - All shipped JavaScript passed syntax checks.
-- 23 contract/bridge/decoder tests passed: same-origin request chain, split Chinese UTF-8/SSE, search/thinking flags, source relaying, no credential/session/proof leakage in relay events, missing-token handling and 401/403 failures, cancellation, supersession, dismissal/navigation during startup, connection reuse/recreation and orphan recovery.
+- 25 contract/bridge/decoder tests passed: same-origin request chain, split Chinese UTF-8/SSE, search/thinking flags, source relaying, no credential/session/proof leakage in relay events, missing-token handling and 401/403 failures, cancellation, supersession, dismissal/navigation during startup, connection reuse/recreation and orphan recovery.
 - Browser UI tests ran the actual card and popup scripts on localhost with a mocked Chrome transport and synthetic answers. They covered consent, rendered context and hidden-text exclusion, expansion, cached view switching, structured-only source links, unverified-story messaging, layouts A/B/C, 375 px viewport positioning, site pause, editable exclusion, stale results, connection errors, saved toolbar controls, and no browser JavaScript errors. See the repository’s `docs/VALIDATION.md` for the validation boundary; running the browser test generates local screenshots and results in `validation/`.
 
 These tests did **not** install this build into the user’s Chrome profile or call an authenticated live DeepSeek account. Earlier personal tests of the 0.0.4 route provided qualitative feedback that it was fast, without reproducible stage timings or verified per-story News citations. This release inherits that connection code, with new orchestration and cancellation. Live Explain, News schema/citation mapping, cold/warm timing, login expiry and browser discard recovery still need the installed-build checks below.

@@ -24,6 +24,7 @@ function mockChrome() {
   window.testControlMessages = []; window.testConnectionStatus = 'connected'; window.testOpenResult = { ok: true };
   window.chrome = {
     storage: { local: { get: async () => structuredClone(data), set: async next => {
+      if (window.testSettingsWriteError) throw new Error('Synthetic save failure');
       const oldValue = structuredClone(data.settings); Object.assign(data, structuredClone(next));
       listeners.forEach(fn => fn({ settings: { oldValue, newValue: structuredClone(data.settings) } }, 'local'));
     } }, onChanged: { addListener: fn => listeners.push(fn) } },
@@ -243,6 +244,44 @@ async function select(page, selector, phrase, request = false) {
     await setupPage.locator('[data-action="retry"]').click();
     await setupPage.locator('[data-action="more"]').waitFor();
     check(await setupPage.evaluate(() => testMessages.filter(m => m.type === 'LOOKUP').length === 2), 'Explicit retry works on small screens in Traditional Chinese');
+    const welcome = await context.newPage(); welcome.on('pageerror', e => errors.push(e.message));
+    await welcome.addInitScript(mockChrome);
+    await welcome.setViewportSize({ width: 520, height: 700 });
+    await welcome.goto(base + '/explained-extension/welcome.html');
+    await welcome.getByRole('button', { name: 'Enable lookups', exact: true }).waitFor({ state: 'visible' });
+    await welcome.waitForFunction(() => !document.getElementById('enable').disabled);
+    check(await welcome.evaluate(() => testMessages.length === 0 && testControlMessages.length === 0), 'Welcome screen makes no lookup or connection requests');
+    await welcome.screenshot({ path: path.join(output, 'welcome-setup.png') });
+    await welcome.getByLabel('Include nearby context', { exact: false }).uncheck();
+    await welcome.getByRole('button', { name: 'Enable lookups', exact: true }).focus();
+    await welcome.keyboard.press('Enter');
+    await welcome.getByRole('heading', { name: 'You’re all set.', exact: true }).waitFor();
+    const welcomePrefs = await welcome.evaluate(async () => (await chrome.storage.local.get('settings')).settings);
+    check(welcomePrefs.consent && welcomePrefs.enabled && !welcomePrefs.contextEnabled, 'Welcome enables only on explicit action and saves the context choice');
+    check(await welcome.evaluate(() => document.activeElement.id === 'complete-title'), 'Completion heading receives keyboard and screen-reader focus');
+    check(await welcome.evaluate(() => testMessages.length === 0 && testControlMessages.length === 0), 'Completing setup neither submits text nor opens DeepSeek');
+    await welcome.screenshot({ path: path.join(output, 'welcome-complete.png') });
+    await welcome.evaluate(() => { window.testClosed = false; window.close = () => { window.testClosed = true; }; });
+    await welcome.getByRole('button', { name: 'Start exploring' }).click();
+    check(await welcome.evaluate(() => testClosed), 'Start exploring closes the setup window without navigating to an external page');
+    await welcome.goto(base + '/explained-extension/welcome.html');
+    await welcome.waitForFunction(() => !document.getElementById('enable').disabled);
+    await welcome.evaluate(() => { window.testClosed = false; window.close = () => { window.testClosed = true; }; });
+    await welcome.getByRole('button', { name: 'Maybe later' }).click();
+    check(await welcome.evaluate(async () => testClosed && !(await chrome.storage.local.get('settings')).settings.consent && testControlMessages.length === 0), 'Skipping leaves lookups unenabled and never opens a connection');
+    await welcome.setViewportSize({ width: 375, height: 667 });
+    await welcome.goto(base + '/explained-extension/welcome.html');
+    await welcome.waitForFunction(() => !document.getElementById('enable').disabled);
+    check(await welcome.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Welcome setup fits a small viewport without horizontal overflow');
+    await welcome.evaluate(() => { window.testSettingsWriteError = true; });
+    await welcome.getByRole('button', { name: 'Enable lookups', exact: true }).click();
+    await welcome.getByText('Lookups could not be enabled.', { exact: false }).waitFor();
+    check(await welcome.getByRole('button', { name: 'Enable lookups', exact: true }).isEnabled() && await welcome.locator('#complete').isHidden(), 'Save failure keeps setup actionable without false success');
+    await welcome.evaluate(() => { window.testSettingsWriteError = false; });
+    await welcome.getByRole('button', { name: 'Enable lookups', exact: true }).click();
+    await welcome.getByRole('heading', { name: 'You’re all set.', exact: true }).waitFor();
+    check(await welcome.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Completion screen fits a small viewport');
+    await welcome.screenshot({ path: path.join(output, 'welcome-small.png') });
     check(errors.length === 0, 'No browser JavaScript errors: ' + errors.join(', '));
     fs.writeFileSync(path.join(output, 'ui-results.json'), JSON.stringify({ checks, passed: true, errors, scope: 'Localhost UI with controlled responses, not installed-extension or authenticated DeepSeek validation.' }, null, 2));
     console.log(`${checks} browser UI checks passed. Screenshots: validation/`);

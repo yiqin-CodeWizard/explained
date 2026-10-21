@@ -7,7 +7,7 @@ const extension = path.join(root, 'explained-extension');
 const manifest = JSON.parse(fs.readFileSync(path.join(extension, 'manifest.json'), 'utf8'));
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 assert.equal(pkg.version, manifest.version, 'Package and manifest version must agree');
-const resources = [manifest.background.service_worker, manifest.action.default_popup, ...Object.values(manifest.icons), ...Object.values(manifest.action.default_icon), ...manifest.content_scripts.flatMap(script => script.js)];
+const resources = [manifest.background.service_worker, manifest.action.default_popup, 'welcome.html', 'welcome.css', 'welcome.js', ...Object.values(manifest.icons), ...Object.values(manifest.action.default_icon), ...manifest.content_scripts.flatMap(script => script.js)];
 for (const resource of resources) assert.ok(fs.existsSync(path.join(extension, resource)), `Missing manifest resource: ${resource}`);
 const css = fs.readFileSync(path.join(extension, 'reader.css'), 'utf8');
 const generated = fs.readFileSync(path.join(extension, 'reader-styles.js'), 'utf8');

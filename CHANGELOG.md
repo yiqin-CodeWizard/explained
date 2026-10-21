@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4 — 2026-10-21
+
+- Open a skippable local welcome window on first install, with tab fallback. Updates do not reopen it.
+- Guide users through explicit Enable lookups and an optional nearby-context choice, then show You’re all set with a short reading guide.
+- Setup does not send selected text or open DeepSeek; the per-selection privacy controls remain in place.
+
 ## 0.1.3 — 2026-10-21
 
 - Keep enabling lookups in the toolbar; highlighting before opt-in is silent.

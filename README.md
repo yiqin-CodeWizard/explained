@@ -14,7 +14,7 @@ I’m now an independent developer and enterprise AI consultant, and I’m shari
 
 This version uses the DeepSeek website in your browser; no official paid API key is required. DeepSeek’s own usage limits still apply.
 
-**Still a work in progress:** v0.1.3 is an experimental preview. There are rough edges, and the connection details and validation limits are documented below.
+**Still a work in progress:** v0.1.4 is an experimental preview. There are rough edges, and the connection details and validation limits are documented below.
 
 ![Explained beside a selection in a sample article](docs/images/reading-note.png)
 
@@ -41,7 +41,7 @@ Normal HTML webpages in the top frame are supported. Browser pages, restricted s
    ```
 
 2. Extract the ZIP if needed. In `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select the **explained-extension** folder containing `manifest.json`.
-3. Pin Explained in Chrome’s Extensions menu. In its toolbar panel, review the sharing notice and choose **Enable lookups**. Enabling alone sends no text and does not open DeepSeek.
+3. A quick setup window opens on your first install. Review what is shared, choose whether to include nearby context, then select **Enable lookups**. You’ll see **You’re all set** and a short guide. **Maybe later** leaves lookups off; you can enable them from the toolbar anytime. Setup sends no text and does not open DeepSeek.
 4. Refresh an existing reading page and highlight a phrase. Review the local preview, then choose **Explain selection** when you want to send it. For news, select **News** and choose **Search news**. Highlighting and switching tabs never submit text.
 5. If a connection needs attention, choose **Open DeepSeek**. Return to your reading and choose **Retry** when ready. Returning never submits automatically. Keep the DeepSeek tab open while answering; it can stay in the background.
 
@@ -75,9 +75,9 @@ npm run package
 
 For an existing Chrome executable, set `CHROME_EXECUTABLE_PATH` when running the UI test. Otherwise, Playwright uses its managed Chromium.
 
-Edit `explained-extension/reader.css` for card styles. Packaging regenerates `reader-styles.js`, validates resources, and creates `explained-v0.1.3.zip` with a SHA-256 checksum. ZIP files and local validation output are ignored by Git.
+Edit `explained-extension/reader.css` for card styles. Packaging regenerates `reader-styles.js`, validates resources, and creates `explained-v0.1.4.zip` with a SHA-256 checksum. ZIP files and local validation output are ignored by Git.
 
-The test suite includes 23 contract/bridge/decoder tests and 50 controlled browser UI checks. All use controlled responses. The browser test runs the shipped UI scripts on localhost in a temporary profile; it does not install the extension or access an authenticated DeepSeek account. See [validation details](docs/VALIDATION.md) for evidence and remaining live checks.
+The test suite includes 25 contract/bridge/decoder tests and 59 controlled browser UI checks. All use controlled responses. The browser test runs the shipped UI scripts on localhost in a temporary profile; it does not install the extension or access an authenticated DeepSeek account. See [validation details](docs/VALIDATION.md) for evidence and remaining live checks.
 
 ## Tell me what you think
 
