@@ -14,7 +14,7 @@ I’m now an independent developer and enterprise AI consultant, and I’m shari
 
 This version uses your own signed-in DeepSeek website session; no official paid API key is required. DeepSeek’s own usage limits still apply.
 
-**Still a work in progress:** v0.1.0 is an experimental preview. There are rough edges, and the connection details and validation limits are documented below.
+**Still a work in progress:** v0.1.2 is an experimental preview. There are rough edges, and the connection details and validation limits are documented below.
 
 ![Explained beside a selection in a sample article](docs/images/reading-note.png)
 
@@ -24,7 +24,7 @@ This version uses your own signed-in DeepSeek website session; no official paid 
 
 - **Explain it:** highlight a word or phrase and read the answer as it arrives. Ask for a little more when you’re curious.
 - **Read the room:** nearby sentences help distinguish meanings. You can inspect that context or switch sharing off.
-- **Follow the story:** the News tab looks for up to three developments from the past 30 days. Links appear only when returned URLs match structured search metadata; unmatched stories are labeled unverified.
+- **Follow the story:** the News tab looks for up to three developments from the past 30 days. Links appear only when returned URLs or explicit citation numbers match structured search metadata; unmatched stories are labeled unverified.
 - **Make yourself comfortable:** choose a compact note, split card, or reading margin.
 - **Pick your language:** English, Simplified Chinese, or Traditional Chinese.
 - **Take a break:** pause everywhere or on a particular site. Your preferences stay saved.
@@ -41,9 +41,9 @@ Normal HTML webpages in the top frame are supported. Browser pages, restricted s
    ```
 
 2. Extract the ZIP if needed. In `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select the **explained-extension** folder containing `manifest.json`.
-3. Pin Explained in Chrome’s Extensions menu. Open the toolbar panel, read the sharing notice, and choose **Enable lookups**.
-4. Select **Open / sign in**, and sign in normally in the dedicated DeepSeek tab. Leave that tab open; it can stay in the background.
-5. Refresh an existing reading page, then highlight a word or short phrase. Choose **News** in the card to search on demand.
+3. Refresh an existing reading page and highlight a word or short phrase. In the card, read the sharing notice and choose **Enable and explain**. No toolbar setup is required.
+4. If sign-in is needed, choose **Open DeepSeek** in the card. Sign in normally, then return to your reading: the same highlight continues automatically. Leave the DeepSeek tab open; it can stay in the background.
+5. Choose **News** in the card to search on demand. Pin Explained in Chrome’s Extensions menu for language, context and pause settings. You can also start setup there with **Enable and connect DeepSeek**.
 
 No build step is required. For updates, replace the source, reload the extension, refresh reading pages, and close the old dedicated connection tab. Detailed controls and troubleshooting are in the [extension guide](explained-extension/README.md).
 
@@ -75,9 +75,9 @@ npm run package
 
 For an existing Chrome executable, set `CHROME_EXECUTABLE_PATH` when running the UI test. Otherwise, Playwright uses its managed Chromium.
 
-Edit `explained-extension/reader.css` for card styles. Packaging regenerates `reader-styles.js`, validates resources, and creates `explained-v0.1.0.zip` with a SHA-256 checksum. ZIP files and local validation output are ignored by Git.
+Edit `explained-extension/reader.css` for card styles. Packaging regenerates `reader-styles.js`, validates resources, and creates `explained-v0.1.2.zip` with a SHA-256 checksum. ZIP files and local validation output are ignored by Git.
 
-The test suite includes 14 contract/bridge tests and 23 browser UI checks. All use controlled responses. The browser test runs the shipped UI scripts on localhost in a temporary profile; it does not install the extension or access an authenticated DeepSeek account. See [validation details](docs/VALIDATION.md) for evidence and remaining live checks.
+The test suite includes 21 contract/bridge/decoder tests and 43 browser UI checks. All use controlled responses. The browser test runs the shipped UI scripts on localhost in a temporary profile; it does not install the extension or access an authenticated DeepSeek account. See [validation details](docs/VALIDATION.md) for evidence and remaining live checks.
 
 ## Tell me what you think
 

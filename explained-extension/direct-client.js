@@ -4,7 +4,7 @@
   if (location.origin !== 'https://chat.deepseek.com') return;
   const CONTROL = 'EXPLAINED_DIRECT_CONTROL_V1';
   const OUTPUT = 'EXPLAINED_DIRECT_OUTPUT_V1';
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.2';
   const PUBLIC_SOLVER = 'https://fe-static.deepseek.com/chat/static/sha3_wasm_bg.7b9ca65ddd.wasm';
   const pageFetch = window.fetch.bind(window);
   const clientMetadata = {};

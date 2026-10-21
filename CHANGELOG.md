@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.2 — 2026-10-21
+
+- Complete first-use setup from the highlight card; enabling in the toolbar also continues an open card.
+- Preserve the selected phrase while opening DeepSeek and resume it once on return after sign-in.
+- Keep Open DeepSeek responsive during connection startup, show open failures, and offer a page refresh when the extension was reloaded.
+- Improve mouse/keyboard button interaction, setup copy and small-screen actions in all card layouts.
+- Combine toolbar consent and connection setup into one action.
+
+## 0.1.1 — 2026-10-21
+
+- Decode SEARCH fragments and delayed search-result patches, including batched updates and TOOL_OPEN results.
+- Preserve search citation IDs through the bridge and match story citations to their structured source URLs.
+- Add decoder, bridge, matching and browser regression coverage for missing News links.
+
 ## 0.1.0 — 2026-10-21
 
 Experimental first reading-extension preview.

@@ -3,13 +3,20 @@ importScripts('shared.js');
 let active = null;
 let revision = 0;
 let queue = Promise.resolve();
+let connectionQueue = Promise.resolve();
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const serial = work => { queue = queue.catch(() => {}).then(work); return queue; };
 const send = (port, message) => { try { port.postMessage(message); } catch { /* Reader closed. */ } };
 const storedSettings = async () => Explained.settings((await chrome.storage.local.get('settings')).settings);
 const isReader = sender => sender.id === chrome.runtime.id && sender.tab && sender.frameId === 0 && /^https?:\/\//.test(sender.url || '') && new URL(sender.url).origin !== 'https://chat.deepseek.com';
 
-async function connectionTab(create = true, foreground = false) {
+// Tab creation has its own lock. Opening sign-in must not wait behind a lookup
+// that is itself waiting for the website to become ready.
+function connectionTab(create = true, foreground = false) {
+  connectionQueue = connectionQueue.catch(() => {}).then(() => prepareConnectionTab(create, foreground));
+  return connectionQueue;
+}
+async function prepareConnectionTab(create, foreground) {
   const saved = (await chrome.storage.session.get('connectionTabId')).connectionTabId;
   if (Number.isInteger(saved)) {
     try {
@@ -126,9 +133,9 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   const popup = !sender.tab && sender.url === chrome.runtime.getURL('popup.html');
   const reader = isReader(sender);
   if (message.type === 'OPEN_CONNECTION' && (popup || reader)) {
-    serial(() => connectionTab(true, true)).then(() => reply({ ok: true }), () => reply({ ok: false })); return true;
+    connectionTab(true, true).then(() => reply({ ok: true }), () => reply({ ok: false })); return true;
   }
-  if (message.type === 'CONNECTION_STATUS' && popup) {
+  if (message.type === 'CONNECTION_STATUS' && (popup || reader)) {
     (async () => {
       const tab = await connectionTab(false);
       if (!tab) return { status: 'closed' };
