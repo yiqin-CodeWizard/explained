@@ -2,6 +2,8 @@
 
 **Highlight a phrase. Understand it in context. Keep reading.**
 
+[Official website](https://yiqin-codewizard.github.io/explained-site/) · [Practice articles](https://yiqin-codewizard.github.io/explained-site/#practice) · [Privacy policy](https://yiqin-codewizard.github.io/explained-site/privacy.html)
+
 I built Explained for a very simple reason: I kept reading things I didn’t understand.
 
 Working as an analyst in venture capital and private equity meant a lot of reading and a lot of learning. New industries, unfamiliar concepts, and acronyms that seemed to assume we’d already met. There was always something to look up.
@@ -33,6 +35,8 @@ This version uses your own signed-in DeepSeek website session; no official paid 
 Normal HTML webpages in the top frame are supported. Browser pages, restricted store pages, PDFs, input fields, and document editors are outside this preview’s scope. Chrome 114+ is required; other browsers have not been verified.
 
 ## Try it in Chrome
+
+Visit the [official Explained website](https://yiqin-codewizard.github.io/explained-site/) for the product overview, installation guidance and extension download. Its practice articles give you a place to try the installed extension. The instructions below describe loading the source from this repository.
 
 1. Download this repository using **Code → Download ZIP**, or clone it:
 
