@@ -4,7 +4,7 @@
   if (location.origin !== 'https://chat.deepseek.com') return;
   const CONTROL = 'EXPLAINED_DIRECT_CONTROL_V1';
   const OUTPUT = 'EXPLAINED_DIRECT_OUTPUT_V1';
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.5';
   const PUBLIC_SOLVER = 'https://fe-static.deepseek.com/chat/static/sha3_wasm_bg.7b9ca65ddd.wasm';
   const pageFetch = window.fetch.bind(window);
   const clientMetadata = {};
@@ -147,9 +147,9 @@
     const stage = name => { run.stage = name; post(run, 'stage', { stage: name, phaseMs: { ...run.phaseMs } }); };
     try {
       stage('authentication');
-      const token = sessionToken();
-      if (!token) throw Object.assign(new Error(), { code: 'LOGIN_REQUIRED' });
-      const baseHeaders = { 'x-client-platform': 'web', ...clientMetadata, 'content-type': 'application/json', authorization: `Bearer ${token}` };
+      let token = '';
+      try { token = sessionToken() || ''; } catch { /* The website may allow this browser session without a stored token. */ }
+      const baseHeaders = { 'x-client-platform': 'web', ...clientMetadata, 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) };
       const jsonPost = async (path, body, name) => {
         const start = performance.now();
         const response = await window.fetch(path, { method: 'POST', credentials: 'same-origin', redirect: 'error', headers: baseHeaders, body: JSON.stringify(body), signal: run.controller.signal });
@@ -237,7 +237,7 @@
     } catch (error) {
       const wasAborted = run.controller.signal.aborted;
       run.controller.abort();
-      const safeCodes = new Set(['LOGIN_REQUIRED', 'HTTP_REJECTED', 'INVALID_JSON', 'BUSINESS_REJECTED', 'REQUEST_CONTRACT_CHANGED', 'CHALLENGE_EXPIRED', 'SOLVER_URL_NOT_ALLOWED', 'SOLVER_DOWNLOAD_FAILED', 'SOLVER_TOO_LARGE', 'SOLVER_IMPORTS_UNSUPPORTED', 'SOLVER_ABI_CHANGED', 'SOLVER_NO_RESULT', 'SOLVER_WORKER_BLOCKED', 'SOLVER_BLOCKED_OR_FAILED', 'SOLVER_TIMEOUT', 'SOLVER_INVALID_RESULT', 'EXPECTED_SSE_RESPONSE', 'STREAM_LIMIT', 'STREAM_FORMAT_UNRECOGNIZED', 'STREAM_NOT_FINISHED_NORMALLY']);
+      const safeCodes = new Set(['HTTP_REJECTED', 'INVALID_JSON', 'BUSINESS_REJECTED', 'REQUEST_CONTRACT_CHANGED', 'CHALLENGE_EXPIRED', 'SOLVER_URL_NOT_ALLOWED', 'SOLVER_DOWNLOAD_FAILED', 'SOLVER_TOO_LARGE', 'SOLVER_IMPORTS_UNSUPPORTED', 'SOLVER_ABI_CHANGED', 'SOLVER_NO_RESULT', 'SOLVER_WORKER_BLOCKED', 'SOLVER_BLOCKED_OR_FAILED', 'SOLVER_TIMEOUT', 'SOLVER_INVALID_RESULT', 'EXPECTED_SSE_RESPONSE', 'STREAM_LIMIT', 'STREAM_FORMAT_UNRECOGNIZED', 'STREAM_NOT_FINISHED_NORMALLY']);
       post(run, 'error', { stage: error.failedStage || run.stage, code: wasAborted && !safeCodes.has(error.code) ? 'ABORTED_OR_FAILED' : (safeCodes.has(error.code) ? error.code : 'REQUEST_FAILED'), httpStatus: Number.isInteger(error.httpStatus) ? error.httpStatus : undefined, businessCode: Number.isInteger(error.businessCode) ? error.businessCode : undefined, phaseMs: { ...run.phaseMs } });
     } finally {
       clearTimeout(deadline);
@@ -251,9 +251,7 @@
     const data = event.data;
     if (!data || data.channel !== CONTROL || typeof data.nonce !== 'string' || data.nonce.length > 80) return;
     if (data.action === 'probe') {
-      let authenticated = false;
-      try { authenticated = !!sessionToken(); } catch { /* Report only presence, never the value. */ }
-      window.postMessage({ channel: OUTPUT, nonce: data.nonce, event: 'ready', version: VERSION, atMs: Date.now(), busy: !!active, authenticated }, location.origin);
+      window.postMessage({ channel: OUTPUT, nonce: data.nonce, event: 'ready', version: VERSION, atMs: Date.now(), busy: !!active }, location.origin);
     } else if (data.action === 'cancel' && active?.nonce === data.nonce) {
       active.controller.abort();
       // A cancelled proof computation must not occupy the next lookup's worker.

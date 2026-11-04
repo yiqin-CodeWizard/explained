@@ -7,7 +7,7 @@ const root = path.join(__dirname, '..', 'explained-extension');
 const envelope = biz_data => Response.json({ code: 0, data: { biz_code: 0, biz_data } });
 const pause = () => new Promise(resolve => setImmediate(resolve));
 async function until(fn) { for (let i = 0; i < 200; i++) { if (fn()) return; await pause(); } throw new Error('Expected event not received'); }
-function setup({ login = true, reject = null, hold = false } = {}) {
+function setup({ login = true, reject = null, hold = false, frames = null } = {}) {
   const calls = [], output = [], listeners = new Set(), runtimeListeners = [];
   const token = 'synthetic-test-value'; // Test-only sentinel; never a real account value.
   let abortCount = 0;
@@ -29,7 +29,7 @@ function setup({ login = true, reject = null, hold = false } = {}) {
       if (url.endsWith('/create_pow_challenge')) return envelope({ challenge: { algorithm: 'DeepSeekHashV1', challenge: 'a'.repeat(64), salt: 'synthetic-salt', signature: 'synthetic-signature', expire_at: Date.now() + 60000, difficulty: 1 } });
       if (!url.endsWith('/completion')) throw new Error('Unexpected endpoint');
       if (hold) return new Promise((resolve, reject) => options.signal.addEventListener('abort', () => { abortCount++; reject(new DOMException('Aborted', 'AbortError')); }, { once: true }));
-      const sse = 'data: ' + JSON.stringify({ choices: [{ delta: { content: '水星是行星。' } }], citations: [{ url: 'https://example.org/source', index: 1 }] }) + '\n\ndata: ' + JSON.stringify({ choices: [{ delta: {}, finish_reason: 'stop' }] }) + '\n\n';
+      const sse = (frames || [{ choices: [{ delta: { content: '水星是行星。' } }], citations: [{ url: 'https://example.org/source', index: 1 }] }, { choices: [{ delta: {}, finish_reason: 'stop' }] }]).map(frame => 'data: ' + JSON.stringify(frame) + '\n\n').join('');
       const bytes = new TextEncoder().encode(sse);
       // Force Chinese UTF-8 and SSE framing to cross arbitrary chunk boundaries.
       return new Response(new ReadableStream({ start(controller) { for (let i = 0; i < bytes.length; i += 7) controller.enqueue(bytes.slice(i, i + 7)); controller.close(); } }), { headers: { 'Content-Type': 'text/event-stream' } });
@@ -46,7 +46,7 @@ function setup({ login = true, reject = null, hold = false } = {}) {
 test('direct bridge: three same-origin POSTs, streaming UTF-8, search flags and bounded source relay', async () => {
   const env = setup();
   const status = await env.send({ type: 'EX_PING' });
-  assert.equal(status.authenticated, true);
+  assert.equal(status.ready, true);
   assert.equal((await env.run('one', 'news')).accepted, true);
   await until(() => env.output.some(m => m.event === 'complete'));
   assert.equal(env.calls.length, 3);
@@ -61,11 +61,27 @@ test('direct bridge: three same-origin POSTs, streaming UTF-8, search flags and 
   const relay = JSON.stringify(env.output);
   for (const secret of [env.token, 'synthetic-session', 'synthetic-signature', 'synthetic-salt']) assert.ok(!relay.includes(secret), 'No private request material in extension events');
 });
-test('direct bridge: missing login and HTTP rejection never retry or switch routes', async () => {
-  for (const options of [{ login: false }, { reject: 401 }, { reject: 403 }]) {
+test('News bridge relays delayed SEARCH URLs and citation IDs through to story matching', async () => {
+  const answer = JSON.stringify({ stories: [{ date: '2026-10-20', summary: 'A development.', sourceUrls: [], sourceCitations: [5] }] });
+  const env = setup({ frames: [
+    { v: { response: { fragments: [{ type: 'SEARCH', results: [] }] } } },
+    { p: 'response/fragments/-1/results', o: 'APPEND', v: [{ url: 'https://example.org/story', title: 'Story', cite_index: 5 }] },
+    { p: 'response/fragments', o: 'APPEND', v: [{ type: 'RESPONSE', content: answer }] },
+    { p: 'response/status', v: 'FINISHED' }
+  ] });
+  await env.run('news-sources', 'news');
+  await until(() => env.output.some(m => m.event === 'complete'));
+  const result = env.output.find(m => m.event === 'complete');
+  const context = vm.createContext({ URL, Intl, Date });
+  vm.runInContext(fs.readFileSync(path.join(root, 'shared.js'), 'utf8'), context);
+  const story = context.Explained.newsResult(result.text, result.sources, new Date('2026-10-21T12:00:00Z')).stories[0];
+  assert.equal(story.sources[0].url, 'https://example.org/story');
+});
+test('direct bridge: HTTP rejection never retries or switches routes', async () => {
+  for (const options of [{ login: false, reject: 401 }, { reject: 401 }, { reject: 403 }]) {
     const env = setup(options); await env.run('one'); await until(() => env.output.some(m => m.event === 'error'));
     assert.equal(env.calls.filter(c => c.url.endsWith('/completion')).length, 0);
-    assert.equal(env.output.find(m => m.event === 'error').code, options.login === false ? 'LOGIN_REQUIRED' : 'HTTP_REJECTED');
+    assert.equal(env.output.find(m => m.event === 'error').code, 'HTTP_REJECTED');
   }
 });
 test('direct bridge: cancellation aborts network before accepting the next request', async () => {
@@ -81,4 +97,13 @@ test('website bridge ignores requests from webpage content-script senders', () =
   let accepted = false;
   for (const fn of env.runtimeListeners) fn({ type: 'EX_RUN' }, { id: 'test', tab: { id: 5 }, url: 'https://evil.example/' }, () => { accepted = true; });
   assert.equal(accepted, false); assert.equal(env.calls.length, 0);
+});
+
+test('missing stored account token does not preempt a website-supported session', async () => {
+  const env = setup({ login: false });
+  await env.run('guest-session', 'news');
+  await until(() => env.output.some(m => m.event === 'complete'));
+  assert.equal(env.calls.length, 3);
+  for (const call of env.calls) assert.equal(Object.hasOwn(call.options.headers, 'authorization'), false);
+  assert.equal(env.output.find(m => m.event === 'complete').text, '水星是行星。');
 });

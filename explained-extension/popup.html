@@ -2,18 +2,18 @@
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Explained</title><link rel="stylesheet" href="popup.css"></head>
 <body>
-  <header><span class="logo">e.</span><div><h1>Explained</h1><p>A little more understanding.</p></div><button id="enabled" class="toggle" aria-pressed="true">On</button></header>
+  <header><span class="logo">e.</span><div><h1>Explained</h1><p>A little more understanding.</p></div><button id="enabled" class="toggle" aria-label="Lookups" aria-pressed="true" hidden>On</button></header>
   <main>
-    <p class="helper">Highlight a word or phrase on a webpage to get an explanation.</p>
-    <section id="consent-panel"><h2>Your words, your connection</h2><p>Selected text and, when enabled, up to 600 characters of nearby context are sent to your signed-in DeepSeek website. DeepSeek may keep these chats.</p><button id="consent" class="solid">Enable lookups</button></section>
-    <label for="language">Answer language</label><select id="language"><option value="en">English</option><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option></select>
-    <div class="setting"><div><label for="context">Use nearby context</label><p>Helps distinguish meanings. Off sends only the selected text.</p></div><input id="context" type="checkbox"></div>
+    <p class="helper">Highlight a phrase for an explanation. Switch to News for recent developments.</p>
+    <section id="consent-panel"><h2>Your choice to share</h2><p>With lookups enabled, highlighting sends selected text and, when enabled, up to 600 nearby characters to DeepSeek. Switching to News starts a search. Queries use your existing DeepSeek website login state. DeepSeek may retain and use chats under its policy and your account settings. <a href="https://yiqin-codewizard.github.io/explained-site/privacy.html" target="_blank" rel="noopener noreferrer">Privacy &amp; permissions</a>.</p><button id="consent" class="solid" disabled>Enable lookups</button><p>Enabling itself sends no text. Pause globally or for a website anytime.</p></section>
+    <label for="language">Answer language</label><select id="language" disabled><option value="en">English</option><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option></select>
+    <div class="setting"><div><label for="context">Use nearby context</label><p>Helps distinguish meanings. Off sends only the selected text.</p></div><input id="context" type="checkbox" disabled></div>
     <div class="setting"><div><h2 id="site-label">This website</h2><p id="site-name">Checking current tab…</p></div><button id="site" class="subtle" disabled>Pause site</button></div>
-    <div class="setting"><div><h2>DeepSeek</h2><p id="connection-status" role="status">Checking connection…</p></div><button id="connection" class="subtle">Open / sign in ↗</button></div>
+    <div class="setting"><div><h2>DeepSeek</h2><p id="connection-status" role="status">Checking connection…</p></div><button id="connection" class="subtle">Open DeepSeek ↗</button></div>
     <div class="setting"><div><h2>Coverage</h2><p>General subjects</p></div><span class="pill">General</span></div>
-    <details><summary>Reading layout &amp; connection details</summary><label for="layout">Reading layout</label><select id="layout"><option value="A">A · The note</option><option value="B">B · The split card</option><option value="C">C · The margin</option></select><p>Keep the dedicated DeepSeek tab open while answering; it can stay in the background. Each browser profile uses its own login. Only your preferences are saved locally.</p><p>This personal-use integration uses the website’s internal interface. It can stop working when the website changes. Explanations are AI generated; check news dates and original sources.</p><p>Normal webpages are supported. Browser pages, the Chrome Web Store, PDFs, input fields and document editors are outside this version’s scope.</p></details>
-    <p id="feedback" role="status"></p>
+    <details><summary>Reading layout &amp; connection details</summary><label for="layout">Reading layout</label><select id="layout" disabled><option value="A">A · The note</option><option value="B">B · The split card</option><option value="C">C · The margin</option></select><p>Keep the dedicated DeepSeek tab open while answering; it can stay in the background. Preferences stay on this device. Connection state is temporary.</p><p>This personal-use integration uses the website’s internal interface. It can stop working when the website changes. Explanations are AI generated; check news dates and original sources.</p><p>Normal webpages are supported. Browser pages, the Chrome Web Store, PDFs, input fields and document editors are outside this version’s scope.</p></details>
+    <p id="feedback" role="status"></p><button id="reload" class="subtle" hidden>Try loading settings again</button>
   </main>
-  <footer>Read. Highlight. Understand.</footer>
+  <footer><a href="https://yiqin-codewizard.github.io/explained-site/privacy.html" target="_blank" rel="noopener noreferrer">Privacy &amp; permissions</a> · Read. Highlight. Understand.</footer>
   <script src="shared.js"></script><script src="popup.js"></script>
 </body></html>

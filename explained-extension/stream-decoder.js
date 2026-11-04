@@ -82,8 +82,8 @@
     }
 
     fragment(value) {
-      if (['TOOL_SEARCH', 'TOOL_OPEN'].includes(value?.type)) {
-        this.metadata(value.results || value.search_results || value.sources);
+      if (['SEARCH', 'TOOL_SEARCH', 'TOOL_OPEN'].includes(value?.type)) {
+        this.metadata(value);
         if (typeof value.content === 'string' && value.content.length < 131072) {
           try { this.metadata(JSON.parse(value.content)); } catch { /* Never parse model prose as source metadata. */ }
         }
@@ -99,8 +99,11 @@
         try {
           const url = new URL(value.url);
           if (['https:', 'http:'].includes(url.protocol) && !url.username && !url.password) {
-            const label = String(value.index ?? value.id ?? value.title ?? url.hostname).slice(0, 200);
-            this.sources.set(url.href, { url: url.href, label });
+            const label = String(value.title || url.hostname).slice(0, 200);
+            const previous = this.sources.get(url.href);
+            const citationIds = [...new Set([...(previous?.citationIds || []), value.cite_index, value.index]
+              .filter(id => /^(?:0|[1-9]\d{0,8})$/.test(String(id))).map(String))].slice(0, 64);
+            this.sources.set(url.href, { url: url.href, label, citationIds });
           }
         } catch { /* Omit malformed metadata URLs. */ }
       }
@@ -134,6 +137,16 @@
         return;
       }
       if (explicit) { this.path = path; this.operation = op; }
+      // Search results usually arrive AFTER the empty SEARCH fragment, through
+      // their own patch path. They are metadata, never assistant answer text.
+      const sourcePatch = /^response\/fragments\/(-\d+|\d+)\/(results|result|search_results|sources|citations|references)(?:\/|$)/.exec(path);
+      if (sourcePatch) {
+        const offset = Number(sourcePatch[1]);
+        const index = offset < 0 ? this.response.fragments.length + offset : offset;
+        const type = this.response.fragments[index]?.type;
+        if (['SEARCH', 'TOOL_SEARCH', 'TOOL_OPEN'].includes(type) || sourcePatch[2] === 'references' || sourcePatch[2] === 'citations') this.metadata(value);
+        return;
+      }
       if (path === 'response' && value && typeof value === 'object' && !Array.isArray(value)) {
         this.snapshot(value);
         return;
@@ -161,10 +174,10 @@
         this.response.content = op === 'APPEND' ? (this.response.content || '') + value : value;
         return;
       }
-      const match = /^response\/fragments\/(-1|\d+)(?:\/(content|type))?$/.exec(path);
+      const match = /^response\/fragments\/(-\d+|\d+)(?:\/(content|type))?$/.exec(path);
       if (!match) return;
       let index = Number(match[1]);
-      if (index === -1) index = this.response.fragments.length - 1;
+      if (index < 0) index = this.response.fragments.length + index;
       if (index < 0 || index >= 64) return;
       this.format = 'deepseek-patch';
       this.recognized++;

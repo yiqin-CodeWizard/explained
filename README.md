@@ -2,7 +2,7 @@
 
 **Highlight a phrase. Understand it in context. Keep reading.**
 
-[Official website](https://yiqin-codewizard.github.io/explained-site/) · [Practice articles](https://yiqin-codewizard.github.io/explained-site/#practice) · [Privacy policy](https://yiqin-codewizard.github.io/explained-site/privacy.html)
+[Official website](https://www.utopia-ft.com/) · [Download & setup](https://www.utopia-ft.com/download/) · [Reading guides](https://www.utopia-ft.com/guides/) · [Privacy policy](https://www.utopia-ft.com/privacy.html)
 
 I built Explained for a very simple reason: I kept reading things I didn’t understand.
 
@@ -14,85 +14,98 @@ So I made my own. A little Chrome extension, built around my preference for keep
 
 I’m now an independent developer and enterprise AI consultant, and I’m sharing Explained for people with the same reading habits—and the same “hang on, what does that mean?” moments.
 
-This version uses your own signed-in DeepSeek website session; no official paid API key is required. DeepSeek’s own usage limits still apply.
+## The current version
 
-**Still a work in progress:** v0.1.0 is an experimental preview. There are rough edges, and the connection details and validation limits are documented below.
+The current public download is **Explained API edition v0.2.1**. It uses your own **DeepSeek API key** and requires internet access. Model and search usage is billed to your DeepSeek account. A DeepSeek website login does not replace an API key.
 
-![Explained beside a selection in a sample article](docs/images/reading-note.png)
-
-*UI demonstration with a synthetic answer. This is not a live DeepSeek result or a latency measurement.*
+The current extension source is in [`extension-wasm-offline/`](extension-wasm-offline/). The directory name is historical: this edition uses DeepSeek's official APIs and does not run AI offline. Its runtime matches the API release; Chrome Web Store packaging uses product-facing metadata and a padded store icon.
 
 ## A little help, right beside your reading
 
-- **Explain it:** highlight a word or phrase and read the answer as it arrives. Ask for a little more when you’re curious.
-- **Read the room:** nearby sentences help distinguish meanings. You can inspect that context or switch sharing off.
-- **Follow the story:** the News tab looks for up to three developments from the past 30 days. Links appear only when returned URLs match structured search metadata; unmatched stories are labeled unverified.
-- **Make yourself comfortable:** choose a compact note, split card, or reading margin.
-- **Pick your language:** English, Simplified Chinese, or Traditional Chinese.
-- **Take a break:** pause everywhere or on a particular site. Your preferences stay saved.
-- **Change your mind:** a new selection cancels the old request, so its answer won’t turn up late and steal the spotlight.
+- **Explain in context:** highlight an unfamiliar word or phrase, then click its selection icon or press Ctrl+X (⌘X on Mac). Highlighting or copying alone sends nothing.
+- **Choose what to share:** include up to 600 nearby characters, inspect the context used, or turn nearby context off.
+- **Explore further:** use **Explain a little more** for a longer explanation with a fresh web search, or **News** for recent developments and source links.
+- **Read in your language:** choose English, Simplified Chinese or Traditional Chinese explanations independently of the article's language.
+- **Make yourself comfortable:** choose the Note, Margin or Split Card layout, and pause lookups for one site or everywhere.
 
-Normal HTML webpages in the top frame are supported. Browser pages, restricted store pages, PDFs, input fields, and document editors are outside this preview’s scope. Chrome 114+ is required; other browsers have not been verified.
+Explained works on normal HTML reading pages in Chrome 114+. PDFs, browser settings pages, restricted store pages, input fields and document editors are outside this version's scope.
+
+## Screenshots
+
+These are the five prepared Chrome Web Store screenshots for v0.2.1. They show the actual extension interface with **illustrative responses**, rather than paid live API results or performance measurements.
+
+### Highlight and understand
+
+![Select a phrase and read a short explanation beside the original article](docs/images/chrome-web-store/01-highlight.png)
+
+### Explore a little more, or follow the news
+
+![Expand an explanation with sources, or switch to recent news](docs/images/chrome-web-store/02-more-and-news.png)
+
+### Read in one language, understand in your own
+
+![Choose English, Simplified Chinese or Traditional Chinese explanations](docs/images/chrome-web-store/03-your-language.png)
+
+### Three reading layouts
+
+![The Note, Margin and Split Card layouts](docs/images/chrome-web-store/04-three-layouts.png)
+
+### Control your sharing and API settings
+
+![Session-only API key storage and controls for nearby context and site access](docs/images/chrome-web-store/05-privacy-and-security.png)
 
 ## Try it in Chrome
 
-Visit the [official Explained website](https://yiqin-codewizard.github.io/explained-site/) for the product overview, installation guidance and extension download. Its practice articles give you a place to try the installed extension. The instructions below describe loading the source from this repository.
+Visit the [official download and setup page](https://www.utopia-ft.com/download/) for the available installation options. The extension has been submitted to the Chrome Web Store; this README does not imply that its listing is already public.
 
-1. Download this repository using **Code → Download ZIP**, or clone it:
+To load the current source manually:
+
+1. Download this repository with **Code → Download ZIP**, or clone it:
 
    ```sh
    git clone https://github.com/yiqin-CodeWizard/explained.git
    ```
 
-2. Extract the ZIP if needed. In `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select the **explained-extension** folder containing `manifest.json`.
-3. Pin Explained in Chrome’s Extensions menu. Open the toolbar panel, read the sharing notice, and choose **Enable lookups**.
-4. Select **Open / sign in**, and sign in normally in the dedicated DeepSeek tab. Leave that tab open; it can stay in the background.
-5. Refresh an existing reading page, then highlight a word or short phrase. Choose **News** in the card to search on demand.
+2. Extract the ZIP if needed. Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select the **extension-wasm-offline** directory containing `manifest.json`.
+3. In setup, enter your own DeepSeek API key, review nearby-context sharing, and choose **Enable lookups**. Setup verifies the key before enabling lookups.
+4. Open a normal HTML article, refresh any page that was already open, highlight a phrase, then click its icon or use the shortcut.
+5. Try the [practice articles](https://www.utopia-ft.com/try/), [context guide](https://www.utopia-ft.com/guides/explain-text-in-context/) or [research-reading guide](https://www.utopia-ft.com/guides/read-research-papers/).
 
-No build step is required. For updates, replace the source, reload the extension, refresh reading pages, and close the old dedicated connection tab. Detailed controls and troubleshooting are in the [extension guide](explained-extension/README.md).
+The API key is kept only in trusted session memory. Re-enter it after restarting Chrome or reloading/updating the extension. Preferences stay saved locally. For setup details, see the [API edition README](extension-wasm-offline/README.md) and [DeepSeek API key guide](https://www.utopia-ft.com/guides/deepseek-api-key/).
 
-## A quick word about your data and the connection
+## Your reading, with your permission
 
-Explained sends your selected phrase and, when enabled, up to 600 characters of nearby context to DeepSeek. The card exposes the context used. DeepSeek may retain the resulting chats. Explained stores preferences locally and keeps a temporary connection-tab ID; it does not persist lookup history or export your login credentials.
+Triggered lookups send the selected text and optional nearby context directly to DeepSeek's official APIs. News, time-sensitive lookups and **Explain a little more** also use web search. The developer operates no lookup proxy and stores no lookup history. DeepSeek independently processes submitted data under its applicable policies.
 
-Automatic highlighting requires permission to run on HTTP/HTTPS pages. You can pause a site or restrict site access using Chrome’s extension settings. See [PRIVACY.md](PRIVACY.md) for the data flow and permissions.
+Pause lookups globally or per site, inspect the context used, and turn nearby-context sharing off from the toolbar. See [PRIVACY.md](PRIVACY.md) and the [API edition's bundled policy](extension-wasm-offline/PRIVACY.md) for edition-specific details.
 
-This preview uses the website’s internal POST/SSE interface and downloads the site’s official proof-of-work WASM at runtime. It does not bypass sign-in, interactive verification or rate-limit rejection, retry rejected requests automatically, or fall back to website UI submission.
+## Develop and contribute
 
-That interface is undocumented and can change. Live News citation mapping and this build’s installed-account behavior still need validation. Explained is an independent project, with no affiliation with DeepSeek or Google.
-
-Public distribution needs a separate review of [DeepSeek’s terms](https://cdn.deepseek.com/policies/en-US/deepseek-terms-of-use.html?locale=de) and [Chrome’s remote-code/WASM policy](https://developer.chrome.com/docs/extensions/develop/migrate/remote-hosted-code). A source-code license does not grant rights to a third-party service. This repository is not a claim of Chrome Web Store eligibility.
-
-## Want to tinker?
-
-Pull up a chair. The extension itself loads without a build step; the tools below are for working on it.
-
-Requirements: Node.js 22+ and Python 3.9+ for development tooling. The loaded extension has no npm dependencies.
+The API extension loads without a build step. Development checks use Node.js 22+ and Python 3.9+; browser checks also use Playwright.
 
 ```sh
 npm ci
-npm test
-npx playwright install chromium
-npm run test:ui
-npm run package
+npm run test:api
+python3 tools/package-wasm-offline.py
 ```
 
-For an existing Chrome executable, set `CHROME_EXECUTABLE_PATH` when running the UI test. Otherwise, Playwright uses its managed Chromium.
+For controlled browser checks and the website:
 
-Edit `explained-extension/reader.css` for card styles. Packaging regenerates `reader-styles.js`, validates resources, and creates `explained-v0.1.0.zip` with a SHA-256 checksum. ZIP files and local validation output are ignored by Git.
+```sh
+npx playwright install chromium
+npm run test:api:browser
+npm run test:site
+npm run dev:site
+```
 
-The test suite includes 14 contract/bridge tests and 23 browser UI checks. All use controlled responses. The browser test runs the shipped UI scripts on localhost in a temporary profile; it does not install the extension or access an authenticated DeepSeek account. See [validation details](docs/VALIDATION.md) for evidence and remaining live checks.
+`site/` contains the website source; `tools/build-site.cjs` generates `_site/`. The generated site is published separately from the root of [explained-site](https://github.com/yiqin-CodeWizard/explained-site). See [website development and deployment](site/README.md).
 
-## Tell me what you think
+The older website-connected editions in `explained-extension/` and `explained-extension-yellow/` are retained for reference; use `extension-wasm-offline/` for the current API edition. Tests use controlled responses and synthetic credentials; they do not establish live API availability or performance.
 
-I thrive on feedback. If something feels clunky, an explanation misses the point, or you have an idea that would make reading easier, [open an issue](https://github.com/yiqin-CodeWizard/explained/issues). Tell me what you were trying to do and what got in the way. Those comments help shape what I build next.
-
-I’m actively iterating on Explained, with a soft spot for improvements that make it simpler. Sometimes the best feature request is “could this take one fewer click?”
-
-Code contributions, accessibility improvements, website compatibility fixes and tests are welcome too. Start with [CONTRIBUTING.md](CONTRIBUTING.md). Please keep account credentials, authentication headers and private chats out of issues and pull requests.
-
-See [the roadmap](docs/ROADMAP.md) and [changelog](CHANGELOG.md) for the current scope. [Security concerns](SECURITY.md) should be reported privately.
+If something feels clunky, an explanation misses the point, or you have an idea that would make reading easier, [open an issue](https://github.com/yiqin-CodeWizard/explained/issues). Start with [CONTRIBUTING.md](CONTRIBUTING.md) for contributions, and use [SECURITY.md](SECURITY.md) for sensitive security reports. Do not include API keys or private reading content in public issues.
 
 ## License
 
-[MIT](LICENSE) for the code and project-authored assets. DeepSeek’s service, names, and remotely loaded assets remain subject to their own terms; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+[MIT](LICENSE) for the code and project-authored assets. Third-party services and materials retain their own terms; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+Explained is an independent project, with no affiliation with DeepSeek or Google.

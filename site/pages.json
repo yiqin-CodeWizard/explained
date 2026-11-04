@@ -1,0 +1,72 @@
+{
+  "home": {
+    "path": "",
+    "languages": [
+      "en",
+      "zh-CN",
+      "zh-TW",
+      "mixed"
+    ]
+  },
+  "download": {
+    "path": "download/",
+    "languages": [
+      "en",
+      "zh-CN",
+      "zh-TW",
+      "mixed"
+    ]
+  },
+  "try": {
+    "path": "try/",
+    "languages": [
+      "en",
+      "zh-CN",
+      "zh-TW",
+      "mixed"
+    ]
+  },
+  "help": {
+    "path": "help/",
+    "languages": [
+      "en",
+      "zh-CN",
+      "zh-TW"
+    ]
+  },
+  "apiKey": {
+    "path": "guides/deepseek-api-key/",
+    "languages": [
+      "en",
+      "zh-CN"
+    ]
+  },
+  "guides": {
+    "path": "guides/",
+    "languages": [
+      "en",
+      "zh-CN"
+    ]
+  },
+  "research": {
+    "path": "guides/read-research-papers/",
+    "languages": [
+      "en",
+      "zh-CN"
+    ]
+  },
+  "context": {
+    "path": "guides/explain-text-in-context/",
+    "languages": [
+      "en",
+      "zh-CN"
+    ]
+  },
+  "changelog": {
+    "path": "changelog/",
+    "languages": [
+      "en",
+      "zh-CN"
+    ]
+  }
+}

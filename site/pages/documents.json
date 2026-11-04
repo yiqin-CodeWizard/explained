@@ -1,0 +1,864 @@
+{
+  "help": {
+    "en": {
+      "eyebrow": "A LITTLE HELP, RIGHT HERE",
+      "title": "Find your way back to reading.",
+      "lead": "Start with the symptom you see. These steps apply to the extension-wasm-offline v0.2.1 API edition.",
+      "sections": [
+        {
+          "id": "first-lookup",
+          "title": "No icon or explanation appears",
+          "paragraphs": [],
+          "items": [
+            "Use a normal HTML article in Chrome 114 or later. Refresh the page after installing or reloading the extension.",
+            "Open the extension toolbar. Enable lookups and check that the current site is not paused. Finish API key setup if needed.",
+            "Select a short phrase in reading text, then click the small icon or press Ctrl+X (⌘X on Mac). Selecting or copying alone sends nothing.",
+            "The shortcut keeps its normal Cut behavior inside input fields and editors. It only explains supported reading selections."
+          ],
+          "links": [
+            {
+              "page": "apiKey",
+              "label": "Set up your DeepSeek API key"
+            },
+            {
+              "page": "try",
+              "label": "Try a practice article"
+            }
+          ]
+        },
+        {
+          "id": "api-errors",
+          "title": "The card reports an API error",
+          "paragraphs": [],
+          "items": [
+            "Missing or invalid key: open API settings from the extension toolbar and enter or replace your key. A website login does not configure the API.",
+            "Insufficient balance or access denied: check your DeepSeek API account balance and permissions through the official platform.",
+            "Too many requests, unavailable service or timeout: wait, check your connection, then choose Retry. Repeated clicks can create additional requests."
+          ],
+          "links": []
+        },
+        {
+          "id": "search",
+          "title": "News or a longer explanation has no sources",
+          "paragraphs": [
+            "News, time-sensitive selections and Explain a little more call DeepSeek Search before generation. If usable evidence is missing or search fails, the extension reports the problem instead of inventing live coverage.",
+            "Read dates and open the original sources. Generated explanations and summaries can be wrong. Keep it short restores the cached short answer."
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "pages",
+          "title": "Where the extension works",
+          "paragraphs": [
+            "Use normal HTML reading pages. Browser settings pages, PDF viewers and document editors are outside the current preview. Browser site-access settings can also prevent the extension from running.",
+            "Reading research published as HTML is supported by this workflow. Opening the same paper in a PDF viewer does not make that viewer supported."
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "privacy",
+          "title": "Control context and pause lookups",
+          "paragraphs": [
+            "The toolbar lets you pause globally or for one site, change explanation language and turn nearby context on or off. With context enabled, up to 600 nearby characters accompany your selection.",
+            "Your key is held only in trusted session memory; preferences are stored locally. Re-enter the key after restarting Chrome or reloading/updating the extension. Reading-page scripts receive sanitized settings rather than the key."
+          ],
+          "items": [],
+          "links": [
+            {
+              "href": "privacy.html",
+              "label": "Read the full privacy policy (English)"
+            }
+          ]
+        },
+        {
+          "id": "feedback",
+          "title": "Still stuck?",
+          "paragraphs": [
+            "Describe the extension version, Chrome version, page type, visible error and the steps to reproduce it. Remove your API key, private reading text and account details from screenshots and issue reports."
+          ],
+          "items": [],
+          "links": [
+            {
+              "external": "https://github.com/yiqin-CodeWizard/explained-site/issues",
+              "label": "Report a problem on GitHub"
+            }
+          ]
+        }
+      ]
+    },
+    "zh-CN": {
+      "eyebrow": "需要时，帮你一下",
+      "title": "找回顺畅阅读的节奏。",
+      "lead": "从你遇到的现象开始排查。以下步骤适用于 extension-wasm-offline v0.2.1 API 版。",
+      "sections": [
+        {
+          "id": "first-lookup",
+          "title": "没有出现图标或解释",
+          "paragraphs": [],
+          "items": [
+            "使用 Chrome 114 或更新版本，打开普通 HTML 文章。安装或重新加载扩展后，请刷新已打开的页面。",
+            "打开扩展工具栏，确认查询已启用、当前网站没有暂停。尚未设置密钥时，先完成 API 设置。",
+            "在阅读正文中划选一小段词句，然后点击小图标，或按 Ctrl+X（Mac 为 ⌘X）。仅划选或复制不会发送请求。",
+            "输入框和编辑器中的快捷键保留正常剪切行为；解释快捷键仅用于支持的阅读选区。"
+          ],
+          "links": [
+            {
+              "page": "apiKey",
+              "label": "设置 DeepSeek API 密钥"
+            },
+            {
+              "page": "try",
+              "label": "打开一篇体验文章"
+            }
+          ]
+        },
+        {
+          "id": "api-errors",
+          "title": "卡片提示 API 错误",
+          "paragraphs": [],
+          "items": [
+            "缺少密钥或密钥无效：从扩展工具栏打开 API settings，填入或更换密钥。登录 DeepSeek 网站不能代替 API 配置。",
+            "余额不足或没有访问权限：前往 DeepSeek 官方平台检查 API 账户余额与权限。",
+            "请求过于频繁、服务不可用或超时：稍等片刻，检查网络后再点击 Retry。重复点击可能增加请求。"
+          ],
+          "links": []
+        },
+        {
+          "id": "search",
+          "title": "News 或更详细的解释没有来源",
+          "paragraphs": [
+            "News、时效性选区以及 Explain a little more 会先调用 DeepSeek Search。搜索失败或缺少可用证据时，扩展会显示问题，不会编造实时报道。",
+            "请核对日期并打开原始来源。生成的解释与摘要可能有误。Keep it short 会恢复已缓存的简短回答。"
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "pages",
+          "title": "哪些页面可以使用",
+          "paragraphs": [
+            "当前支持普通 HTML 阅读页面。浏览器设置页、PDF 阅读器和文档编辑器不在本预览版的支持范围内。浏览器的网站访问权限设置也可能阻止扩展运行。",
+            "以 HTML 形式发布的研究文章可以用于这一阅读流程。同一篇论文在 PDF 阅读器中打开时，仍属于不支持的页面。"
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "privacy",
+          "title": "控制上下文与暂停查询",
+          "paragraphs": [
+            "工具栏可以全局暂停、暂停某个网站、选择解释语言，以及开启或关闭附近上下文。开启上下文时，会随选区发送最多 600 个附近字符。",
+            "密钥仅保存在受限的会话内存中，偏好保存在本机。重启 Chrome 或重新加载／更新扩展后需重新输入密钥。阅读页脚本只能获得过滤后的设置，不能读取密钥。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "href": "privacy.html",
+              "label": "阅读完整隐私政策（英文）"
+            }
+          ]
+        },
+        {
+          "id": "feedback",
+          "title": "仍然无法解决？",
+          "paragraphs": [
+            "反馈时提供扩展版本、Chrome 版本、页面类型、可见错误和复现步骤。截图及 issue 中请去掉 API 密钥、私人阅读内容和账户信息。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "external": "https://github.com/yiqin-CodeWizard/explained-site/issues",
+              "label": "在 GitHub 反馈问题"
+            }
+          ]
+        }
+      ]
+    },
+    "zh-TW": {
+      "eyebrow": "需要時，幫你一下",
+      "title": "找回順暢閱讀的節奏。",
+      "lead": "從你遇到的現象開始排查。以下步驟適用於 extension-wasm-offline v0.2.1 API 版。",
+      "sections": [
+        {
+          "id": "first-lookup",
+          "title": "沒有出現圖示或解釋",
+          "paragraphs": [],
+          "items": [
+            "使用 Chrome 114 或更新版本，開啟普通 HTML 文章。安裝或重新載入擴充功能後，請重新整理已開啟的頁面。",
+            "開啟擴充功能工具列，確認查詢已啟用、目前網站沒有暫停。尚未設定金鑰時，先完成 API 設定。",
+            "在閱讀正文中選取一小段詞句，然後點擊小圖示，或按 Ctrl+X（Mac 為 ⌘X）。僅選取或複製不會傳送請求。",
+            "輸入框和編輯器中的快速鍵保留正常剪下行為；解釋快速鍵僅用於支援的閱讀選區。"
+          ],
+          "links": [
+            {
+              "page": "apiKey",
+              "label": "設定 DeepSeek API 金鑰（英文）"
+            },
+            {
+              "page": "try",
+              "label": "開啟一篇體驗文章"
+            }
+          ]
+        },
+        {
+          "id": "api-errors",
+          "title": "卡片提示 API 錯誤",
+          "paragraphs": [],
+          "items": [
+            "缺少金鑰或金鑰無效：從擴充功能工具列開啟 API settings，填入或更換金鑰。登入 DeepSeek 網站不能代替 API 設定。",
+            "餘額不足或沒有存取權限：前往 DeepSeek 官方平台檢查 API 帳戶餘額與權限。",
+            "請求過於頻繁、服務無法使用或逾時：稍等片刻，檢查網路後再點擊 Retry。重複點擊可能增加請求。"
+          ],
+          "links": []
+        },
+        {
+          "id": "search",
+          "title": "News 或更詳細的解釋沒有來源",
+          "paragraphs": [
+            "News、時效性選區以及 Explain a little more 會先呼叫 DeepSeek Search。搜尋失敗或缺少可用證據時，擴充功能會顯示問題，不會編造即時報導。",
+            "請核對日期並開啟原始來源。生成的解釋與摘要可能有誤。Keep it short 會恢復已快取的簡短回答。"
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "pages",
+          "title": "哪些頁面可以使用",
+          "paragraphs": [
+            "目前支援普通 HTML 閱讀頁面。瀏覽器設定頁、PDF 閱讀器和文件編輯器不在本預覽版的支援範圍內。瀏覽器的網站存取權限設定也可能阻止擴充功能執行。",
+            "以 HTML 形式發布的研究文章可以用於這一閱讀流程。同一篇論文在 PDF 閱讀器中開啟時，仍屬於不支援的頁面。"
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "privacy",
+          "title": "控制上下文與暫停查詢",
+          "paragraphs": [
+            "工具列可以全域暫停、暫停某個網站、選擇解釋語言，以及開啟或關閉附近上下文。開啟上下文時，會隨選區傳送最多 600 個附近字元。",
+            "金鑰僅保存在受限的工作階段記憶體中，偏好儲存在本機。重新啟動 Chrome 或重新載入／更新擴充功能後需重新輸入金鑰。閱讀頁腳本只能取得過濾後的設定，不能讀取金鑰。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "href": "privacy.html",
+              "label": "閱讀完整隱私政策（英文）"
+            }
+          ]
+        },
+        {
+          "id": "feedback",
+          "title": "仍然無法解決？",
+          "paragraphs": [
+            "回報時提供擴充功能版本、Chrome 版本、頁面類型、可見錯誤和重現步驟。截圖及 issue 中請去掉 API 金鑰、私人閱讀內容和帳戶資訊。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "external": "https://github.com/yiqin-CodeWizard/explained-site/issues",
+              "label": "在 GitHub 回報問題"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "apiKey": {
+    "en": {
+      "eyebrow": "ONE KEY, YOUR OWN ACCOUNT",
+      "title": "Set up your DeepSeek API key.",
+      "lead": "Connect Explained to your own DeepSeek API account, then choose when to send a reading lookup. This guide covers v0.2.1.",
+      "sections": [
+        {
+          "id": "get-key",
+          "title": "1. Open the official API key page",
+          "paragraphs": [
+            "Sign in to the DeepSeek platform and use its API key management page to create or obtain a key. Follow the platform’s current account and billing instructions.",
+            "A DeepSeek website session is different from an API key. The API edition does not use a chat.deepseek.com connection tab."
+          ],
+          "items": [],
+          "links": [
+            {
+              "external": "https://platform.deepseek.com/api_keys",
+              "label": "Open DeepSeek API key management"
+            }
+          ]
+        },
+        {
+          "id": "configure",
+          "title": "2. Enter the key in extension setup",
+          "paragraphs": [],
+          "items": [
+            "Install the Chrome extension, or open API settings from its toolbar if it is already installed.",
+            "Paste your key into the DeepSeek API key field. Decide whether to include nearby context.",
+            "Choose Enable lookups. Setup verifies the key through the model-list API, without submitting reading text or starting a model or search lookup."
+          ],
+          "links": [
+            {
+              "page": "download",
+              "label": "Download and install Explained"
+            }
+          ],
+          "image": "api-setup.png",
+          "caption": "The v0.2.1 setup screen. The example key is synthetic and masked."
+        },
+        {
+          "id": "first-read",
+          "title": "3. Make your first lookup",
+          "paragraphs": [
+            "Choose Start exploring, or open the practice reading room. Refresh a reading page that was already open before installation.",
+            "Highlight a phrase, then click its icon or press Ctrl+X (⌘X on Mac). A model request starts only when you activate the selection. News, time-sensitive queries and Explain a little more also use search."
+          ],
+          "items": [],
+          "links": [
+            {
+              "page": "try",
+              "label": "Open the reading room"
+            }
+          ]
+        },
+        {
+          "id": "replace",
+          "title": "4. Replace or keep your saved key",
+          "paragraphs": [
+            "Open API settings again to replace a key. If setup says a key is saved for this session, leaving the field empty retains that session key for revalidation.",
+            "Never paste a key into a reading article, GitHub issue or public screenshot. If you suspect it has been exposed, manage or revoke it through the official platform and update extension settings."
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "costs",
+          "title": "Understand billing and storage",
+          "paragraphs": [
+            "Model and search calls are billed to your DeepSeek API account. Check the official platform for current pricing, account access and balance; this page does not promise a free allowance or a fixed per-lookup price.",
+            "The key is kept only in trusted session memory and attached to background API requests. Reading-page content scripts do not receive it. Re-enter after restarting Chrome or reloading/updating the extension. Review the full policy before submitting sensitive text."
+          ],
+          "items": [],
+          "links": [
+            {
+              "page": "help",
+              "label": "Troubleshoot key and connection errors"
+            },
+            {
+              "href": "privacy.html",
+              "label": "Read the privacy policy (English)"
+            }
+          ]
+        }
+      ]
+    },
+    "zh-CN": {
+      "eyebrow": "一个密钥，连接你自己的账户",
+      "title": "设置你的 DeepSeek API 密钥。",
+      "lead": "将 Explained 连接到你自己的 DeepSeek API 账户，再由你决定何时发送阅读查询。本教程适用于 v0.2.1。",
+      "sections": [
+        {
+          "id": "get-key",
+          "title": "1. 打开官方密钥页面",
+          "paragraphs": [
+            "登录 DeepSeek 开放平台，通过 API 密钥管理页面创建或获取密钥。账户和计费设置请以平台当前说明为准。",
+            "DeepSeek 网站登录状态与 API 密钥不同。API 版不使用 chat.deepseek.com 连接标签页。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "external": "https://platform.deepseek.com/api_keys",
+              "label": "打开 DeepSeek API 密钥管理"
+            }
+          ]
+        },
+        {
+          "id": "configure",
+          "title": "2. 在扩展设置中填写密钥",
+          "paragraphs": [],
+          "items": [
+            "安装 Chrome 扩展；如果已经安装，从扩展工具栏打开 API settings。",
+            "将密钥粘贴到 DeepSeek API key 输入框，并决定是否分享附近上下文。",
+            "点击 Enable lookups。设置会通过模型列表 API 验证密钥，不会提交阅读文字，也不会启动模型或搜索查询。"
+          ],
+          "links": [
+            {
+              "page": "download",
+              "label": "下载并安装 Explained"
+            }
+          ],
+          "image": "api-setup.png",
+          "caption": "v0.2.1 的实际设置界面；示例密钥为合成数据，已显示为掩码。"
+        },
+        {
+          "id": "first-read",
+          "title": "3. 开始第一次查询",
+          "paragraphs": [
+            "点击 Start exploring，或直接打开文章体验区。安装前已经打开的阅读页面，请刷新一次。",
+            "划选词句，再点击旁边的图标，或按 Ctrl+X（Mac 为 ⌘X）。只有主动触发选区，才会发起模型请求。News、时效性查询和 Explain a little more 也会使用搜索。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "page": "try",
+              "label": "进入文章体验区"
+            }
+          ]
+        },
+        {
+          "id": "replace",
+          "title": "4. 更换或保留已有密钥",
+          "paragraphs": [
+            "再次打开 API settings 可以更换密钥。如果设置提示本次会话已保存密钥，输入框留空会保留本次会话的密钥并重新验证。",
+            "不要把密钥粘贴到阅读文章、GitHub issue 或公开截图中。如果怀疑泄露，请通过官方平台管理或撤销密钥，再更新扩展设置。"
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "costs",
+          "title": "了解计费与存储",
+          "paragraphs": [
+            "模型和搜索调用由你的 DeepSeek API 账户计费。实时价格、账户权限与余额请在官方平台查询；本页不承诺免费额度或固定的单次查询价格。",
+            "密钥仅保存在受限的会话内存中，并附在后台 API 请求上。重启 Chrome 或重新加载／更新扩展后需重新输入。阅读页面的内容脚本不会获得密钥。提交敏感文字前，请阅读完整政策。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "page": "help",
+              "label": "排查密钥与连接问题"
+            },
+            {
+              "href": "privacy.html",
+              "label": "阅读隐私政策（英文）"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "research": {
+    "en": {
+      "eyebrow": "A READING WORKFLOW",
+      "title": "Read research without losing the thread.",
+      "lead": "A practical way to use Explained with research articles published as HTML. Work from an unfamiliar phrase back to the author’s argument.",
+      "sections": [
+        {
+          "id": "start",
+          "title": "Start with a readable HTML article",
+          "paragraphs": [
+            "Install the API edition, configure your own DeepSeek key and open an HTML article. If a publisher offers both HTML and PDF, choose HTML for this workflow: Explained does not currently run inside PDF viewers.",
+            "For a first attempt, use the DeepSeek-V4 reading in the practice room. It contains the phrase KV cache and enough surrounding prose to make the question specific."
+          ],
+          "items": [],
+          "links": [
+            {
+              "page": "try",
+              "label": "Choose a practice reading"
+            },
+            {
+              "page": "download",
+              "label": "Install the Chrome extension"
+            }
+          ]
+        },
+        {
+          "id": "select",
+          "title": "Select one obstacle to understanding",
+          "paragraphs": [
+            "Read the sentence once before looking anything up. Highlight the unfamiliar term rather than the whole paragraph, then click the selection icon or press Ctrl+X (⌘X on Mac).",
+            "In the practice reading, try KV cache. The useful question is how that phrase functions in this sentence. Nearby context can help the model explain the intended meaning, rather than produce an unrelated general definition."
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "context",
+          "title": "Inspect what context contributes",
+          "paragraphs": [
+            "Open Context used in the answer card and compare it with the sentence you were reading. If nearby context is enabled, up to 600 characters may be sent with the selection.",
+            "Try turning nearby context off from the toolbar and making a new lookup. Compare which parts of the answer depend on the surrounding text. This is a reading exercise; the two generated answers may differ for other reasons too."
+          ],
+          "items": [],
+          "links": [
+            {
+              "page": "context",
+              "label": "Explore the same word in different contexts"
+            }
+          ]
+        },
+        {
+          "id": "deeper",
+          "title": "Use a longer explanation for one remaining question",
+          "paragraphs": [
+            "If the short answer leaves a gap, choose Explain a little more. In v0.2.1 this starts a fresh web search and requests a more detailed explanation. Open relevant source links before relying on a claim.",
+            "Keep it short returns to the cached short answer. News serves a different purpose: it searches for recent developments, so use it when you want follow-up coverage rather than a definition of the original sentence."
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "return",
+          "title": "Return to the author’s claim",
+          "paragraphs": [],
+          "items": [
+            "Reread the original sentence and explain its role in your own words. A term definition alone does not establish the paper’s conclusion.",
+            "Separate reported measurements, comparisons and your own interpretation. Check the original paper for conditions and limitations.",
+            "Treat generated text as reading assistance. Verify important facts, dates and citations against the original material.",
+            "Model and search calls use your DeepSeek API account. Use the toolbar to pause lookups when you want uninterrupted reading."
+          ],
+          "links": [
+            {
+              "page": "help",
+              "label": "Troubleshoot the reading workflow"
+            }
+          ]
+        }
+      ]
+    },
+    "zh-CN": {
+      "eyebrow": "一个完整的阅读流程",
+      "title": "读懂研究文章，接住原来的思路。",
+      "lead": "以 HTML 研究文章为例，从一个不熟悉的词句出发，再回到作者的论证。",
+      "sections": [
+        {
+          "id": "start",
+          "title": "先打开可阅读的 HTML 文章",
+          "paragraphs": [
+            "安装 API 版、配置自己的 DeepSeek 密钥，再打开 HTML 文章。如果发布方同时提供 HTML 和 PDF，请为这个流程选择 HTML：Explained 当前不在 PDF 阅读器内运行。",
+            "第一次可以使用体验区中的 DeepSeek-V4 短文。文中包含 KV cache，以及足以帮助理解问题的前后文。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "page": "try",
+              "label": "选择一篇体验文章"
+            },
+            {
+              "page": "download",
+              "label": "安装 Chrome 扩展"
+            }
+          ]
+        },
+        {
+          "id": "select",
+          "title": "每次选中一个理解上的障碍",
+          "paragraphs": [
+            "先完整读一遍句子。划选不熟悉的术语，而不是整段文字，再点击划选图标，或按 Ctrl+X（Mac 为 ⌘X）。",
+            "在体验短文中，可以试试 KV cache。重点是理解它在这句话中的作用。附近上下文可以帮助模型解释当前语境中的含义，而不只是给出脱离文章的通用定义。"
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "context",
+          "title": "看清上下文提供了什么",
+          "paragraphs": [
+            "展开回答卡片中的“使用的上下文”，与正在阅读的句子比较。开启附近上下文时，最多会随选区发送 600 个附近字符。",
+            "也可以从工具栏关闭附近上下文，再发起一次新查询，比较回答中哪些部分依赖文章内容。这是一种阅读练习；两次生成结果也可能因为其他原因而不同。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "page": "context",
+              "label": "看看同一个词在不同语境下的含义"
+            }
+          ]
+        },
+        {
+          "id": "deeper",
+          "title": "围绕尚未理解的问题深入一步",
+          "paragraphs": [
+            "简短解释仍有缺口时，可以点击 Explain a little more。v0.2.1 会重新进行网络搜索，并请求更详细的解释。依赖某项说法之前，先打开有关来源。",
+            "Keep it short 会返回缓存的简短回答。News 的用途不同：它搜索近期发展，适合追踪后续消息，不是对原句下定义的必要步骤。"
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "return",
+          "title": "最后回到作者的论证",
+          "paragraphs": [],
+          "items": [
+            "重新阅读原句，用自己的话说明它在文章中起什么作用。理解术语本身，并不等于证实论文结论。",
+            "分清文中报告的测量、比较条件和自己的解释。条件与局限应回到原论文核对。",
+            "把生成文字当作阅读辅助。重要事实、日期和引用，应与原始材料交叉检查。",
+            "模型和搜索调用由你的 DeepSeek API 账户计费。需要连续阅读时，可以从工具栏暂停查询。"
+          ],
+          "links": [
+            {
+              "page": "help",
+              "label": "排查阅读流程中的问题"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "context": {
+    "en": {
+      "eyebrow": "MEANING DEPENDS ON THE SENTENCE",
+      "title": "Understand a phrase in its own context.",
+      "lead": "The same word can point to different ideas. This exercise shows what nearby context adds and how to inspect or disable it.",
+      "sections": [
+        {
+          "id": "example",
+          "title": "One word, two sentences",
+          "paragraphs": [
+            "Consider these two original examples: “The footpath follows the bank beside the river.” And: “The bank approved the application after reviewing the documents.”",
+            "Both contain bank, but the surrounding words suggest different meanings. The example illustrates ambiguity; it is not a transcript of a live model response. Highlight bank in either sentence and explicitly activate the lookup if you want to try it."
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "inspect",
+          "title": "Inspect the context used",
+          "paragraphs": [
+            "With nearby context enabled, Explained sends the selected phrase and up to 600 nearby characters. Open Context used in the card to inspect the captured text. The context is bounded, so it may omit information elsewhere in a long article.",
+            "Check whether that text includes what makes the phrase meaningful. If it does not, read more of the original article before relying on the explanation. A convincing answer can still be based on incomplete context."
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "control",
+          "title": "Choose what to share",
+          "paragraphs": [],
+          "items": [
+            "Use the extension toolbar to turn nearby context off before making a new lookup. Only the selected text is then used as reading input; required service authentication and network metadata still accompany API requests.",
+            "Selection or copying alone does not submit a query. Click the selection icon or use Ctrl+X (⌘X on Mac) when you want an explanation.",
+            "Pause a site or pause all lookups when you do not want the extension to handle reading selections."
+          ],
+          "links": [
+            {
+              "href": "privacy.html",
+              "label": "Review the data flow and privacy policy (English)"
+            }
+          ]
+        },
+        {
+          "id": "compare",
+          "title": "Compare meaning, not just wording",
+          "paragraphs": [
+            "Look for the core interpretation in each answer. Two answers can use different words while describing the same meaning; similar wording can also hide an incorrect interpretation.",
+            "Keep the original sentence visible and ask whether the explanation fits it. If the term is still ambiguous, the useful outcome may be recognizing that you need more information."
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "continue",
+          "title": "Take the habit into longer reading",
+          "paragraphs": [
+            "Try the same approach with an acronym in a research article: select the acronym, inspect the nearby text, read the explanation, and return to the original claim. Use a longer explanation or its sources when a specific uncertainty remains.",
+            "Changing the page’s reading language does not change the language of live explanations. Choose that separately in the extension toolbar."
+          ],
+          "items": [],
+          "links": [
+            {
+              "page": "research",
+              "label": "Use the research-reading workflow"
+            },
+            {
+              "page": "try",
+              "label": "Open the practice reading room"
+            }
+          ]
+        }
+      ]
+    },
+    "zh-CN": {
+      "eyebrow": "含义，藏在前后文里",
+      "title": "结合原来的语境，理解一个词句。",
+      "lead": "同一个词可能指向不同概念。用这个练习观察附近上下文的作用，并学会查看或关闭它。",
+      "sections": [
+        {
+          "id": "example",
+          "title": "同一个词，两句话",
+          "paragraphs": [
+            "看这两个原创例句：“The footpath follows the bank beside the river.” 以及：“The bank approved the application after reviewing the documents.”",
+            "两句都出现了 bank，但周围的词让人联想到不同含义。这个例子用于展示歧义，并不是实时模型回答的记录。想试一下，可以划选任意句中的 bank，再主动触发查询。"
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "inspect",
+          "title": "查看实际使用的上下文",
+          "paragraphs": [
+            "开启附近上下文时，Explained 会发送选中的词句及最多 600 个附近字符。展开卡片中的“使用的上下文”，可以查看捕获的文字。上下文长度有限，长文章其他位置的信息可能不会包含在内。",
+            "检查这段文字是否包含理解词句所需的线索。如果没有，先多读一点原文再依赖解释。听起来可信的回答，也可能建立在不完整的上下文上。"
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "control",
+          "title": "由你决定分享多少",
+          "paragraphs": [],
+          "items": [
+            "可以先从扩展工具栏关闭附近上下文，再进行一次新查询。此时阅读输入只有选中的文字；API 请求仍会携带服务所需的身份验证和网络元数据。",
+            "仅划选或复制不会提交查询。需要解释时，点击划选图标，或按 Ctrl+X（Mac 为 ⌘X）。",
+            "不希望扩展处理阅读选区时，可以暂停当前网站，或暂停所有查询。"
+          ],
+          "links": [
+            {
+              "href": "privacy.html",
+              "label": "查看数据流向与隐私政策（英文）"
+            }
+          ]
+        },
+        {
+          "id": "compare",
+          "title": "比较含义，而不只是措辞",
+          "paragraphs": [
+            "关注两次回答的核心解释。不同措辞可能表达同一个意思，相似措辞也可能掩盖错误理解。",
+            "保留原句，检查解释是否真的适用于它。如果术语仍有歧义，意识到还需要更多信息，本身也是有用的阅读结果。"
+          ],
+          "items": [],
+          "links": []
+        },
+        {
+          "id": "continue",
+          "title": "把这个习惯带回长文章",
+          "paragraphs": [
+            "阅读研究文章时，可以对缩写使用同样的方法：选中缩写、查看附近文字、阅读解释，再回到原来的论证。仍有具体疑问时，再查看更详细的解释及来源。",
+            "改变网页的阅读语言，不会改变实时解释的语言。解释语言需要在扩展工具栏中单独选择。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "page": "research",
+              "label": "使用研究文章阅读流程"
+            },
+            {
+              "page": "try",
+              "label": "进入文章体验区"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "changelog": {
+    "en": {
+      "eyebrow": "KNOW WHAT YOU ARE INSTALLING",
+      "title": "Versions and manual updates.",
+      "lead": "The current default download is extension-wasm-offline v0.2.1, the API edition. Website improvements do not automatically update an installed extension.",
+      "sections": [
+        {
+          "id": "current",
+          "title": "v0.2.1 — API edition",
+          "paragraphs": [],
+          "items": [
+            "Explanations use DeepSeek’s official model API with your own key. News, time-sensitive queries and Explain a little more also use DeepSeek Search.",
+            "Lookups start from the selection icon or Ctrl+X (⌘X on Mac). Highlighting and copying alone send nothing.",
+            "Setup verifies a supplied key. The key stays only in trusted session memory; re-enter it after restarting Chrome or reloading/updating the extension. Reading-page scripts receive sanitized settings.",
+            "Keep it short restores the cached answer; pausing, closing or changing relevant settings cancels active work."
+          ],
+          "links": [
+            {
+              "page": "download",
+              "label": "Download v0.2.1 and verify its checksum"
+            },
+            {
+              "page": "apiKey",
+              "label": "Set up your API key"
+            }
+          ]
+        },
+        {
+          "id": "upgrade",
+          "title": "Update an unpacked API extension",
+          "paragraphs": [],
+          "items": [
+            "Download the current ZIP and check its displayed version. Extract it; manifest.json is at the ZIP root.",
+            "Replace the files in the folder used by the installed unpacked API edition. Check that manifest.json is directly in that folder rather than inside an extra nested directory.",
+            "Open chrome://extensions, reload the unpacked extension and refresh existing reading pages. Open API settings if setup is requested.",
+            "Downloading or unzipping alone does not update the files Chrome is currently using."
+          ],
+          "links": [
+            {
+              "page": "help",
+              "label": "Get help if the updated extension does not appear"
+            }
+          ]
+        },
+        {
+          "id": "earlier",
+          "title": "Earlier website editions",
+          "paragraphs": [
+            "The earlier Explained v0.1.5 website edition used a DeepSeek website connection. Its setup and query behavior differ from the API edition, which requires an API key. Refer to the version-specific privacy policy if you are using an earlier edition.",
+            "Published versioned download URLs and checksums remain stable. A website navigation or tutorial update does not change the bytes of an existing extension ZIP."
+          ],
+          "items": [],
+          "links": [
+            {
+              "href": "privacy.html",
+              "label": "Read the version-specific privacy policy (English)"
+            }
+          ]
+        }
+      ]
+    },
+    "zh-CN": {
+      "eyebrow": "知道自己安装了什么",
+      "title": "版本记录与手动更新。",
+      "lead": "当前默认下载是 extension-wasm-offline v0.2.1 API 版。网站更新不会自动更新已安装的扩展。",
+      "sections": [
+        {
+          "id": "current",
+          "title": "v0.2.1 — API 版",
+          "paragraphs": [],
+          "items": [
+            "使用自己的密钥调用 DeepSeek 官方模型 API。News、时效性查询和 Explain a little more 也会使用 DeepSeek Search。",
+            "通过划选图标或 Ctrl+X（Mac 为 ⌘X）触发查询；仅划选或复制不会发送请求。",
+            "设置时验证密钥。密钥仅保存在会话内存中，重启 Chrome 或重新加载／更新扩展后需重新输入；阅读页脚本只获得过滤后的设置。",
+            "Keep it short 恢复缓存回答；暂停、关闭或更改相关设置会取消正在进行的请求。"
+          ],
+          "links": [
+            {
+              "page": "download",
+              "label": "下载 v0.2.1 并核对校验和"
+            },
+            {
+              "page": "apiKey",
+              "label": "设置 API 密钥"
+            }
+          ]
+        },
+        {
+          "id": "upgrade",
+          "title": "手动更新解压加载的 API 扩展",
+          "paragraphs": [],
+          "items": [
+            "下载当前 ZIP，核对显示的版本，然后解压。manifest.json 位于 ZIP 根目录。",
+            "替换已安装 API 版所使用文件夹中的文件。确认 manifest.json 直接位于该文件夹中，没有多嵌套一层目录。",
+            "打开 chrome://extensions，重新加载解压的扩展，再刷新已打开的阅读页面。如果提示设置，请打开 API settings。",
+            "仅下载或解压文件，不会更新 Chrome 正在使用的扩展文件。"
+          ],
+          "links": [
+            {
+              "page": "help",
+              "label": "更新后没有反应时查看帮助"
+            }
+          ]
+        },
+        {
+          "id": "earlier",
+          "title": "较早的网站连接版本",
+          "paragraphs": [
+            "较早的 Explained v0.1.5 网站版使用 DeepSeek 网站连接，其设置方式和查询行为与需要 API 密钥的新版本不同。仍在使用旧版时，请查看按版本区分的隐私政策。",
+            "已发布的版本化下载地址与校验和保持稳定。网站导航或教程更新，不会改变现有扩展 ZIP 的字节。"
+          ],
+          "items": [],
+          "links": [
+            {
+              "href": "privacy.html",
+              "label": "查看按版本区分的隐私政策（英文）"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

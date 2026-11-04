@@ -20,3 +20,14 @@ storageState*.json
 # Personal experiments and generated evidence remain local.
 deepseek-bridge-prototype/
 validation/
+
+# Rebuilt for GitHub Pages; source lives in site/.
+_site/
+
+# Store dashboard records, local release copies and unrelated experiments.
+store-listing-v*/
+extension-id.txt
+extension-wasm-offline-v*/
+Explained-multiple-models*/
+Explained-multiple-models-Setup.md
+installer/

@@ -1,0 +1,12 @@
+{
+  "url": "https://www.utopia-ft.com/",
+  "repository": "https://github.com/yiqin-CodeWizard/explained",
+  "defaultTopic": "drug-development",
+  "downloadEdition": "extension-wasm-offline",
+  "downloadSha256": "5ef7b00817f3ccd4a0d14b037fbabe300d05fa1e70d274d8e80d48337bb6ab04",
+  "customDomain": "www.utopia-ft.com",
+  "legacySiteURLs": [
+    "https://yiqin-codewizard.github.io/explained-site/"
+  ],
+  "siteRepository": "https://github.com/yiqin-CodeWizard/explained-site"
+}

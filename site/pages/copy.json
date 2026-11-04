@@ -1,0 +1,165 @@
+{
+  "en": {
+    "home": "Home",
+    "try": "Try it",
+    "download": "Download & setup",
+    "help": "Help",
+    "guides": "Guides",
+    "allArticles": "Open the reading room",
+    "afterInstall": "Your next good read starts here.",
+    "afterInstallBody": "Once setup is complete, open a practice article. Highlight a phrase and click its icon, or use Ctrl+X (⌘X on Mac).",
+    "backHome": "Back to home",
+    "skip": "Skip to content",
+    "navigation": "Main navigation",
+    "languageFallback": "Read in English",
+    "titleHome": "Explained — AI Reading Assistant for Chrome",
+    "titleDownload": "Download Explained for Chrome — Installation & API Setup",
+    "titleTry": "Try Explained — Research Reading Practice",
+    "descriptionHome": "Explain unfamiliar words and concepts beside your reading with Explained, an AI reading assistant for Chrome powered by your DeepSeek API key.",
+    "descriptionDownload": "Download Explained API edition for Chrome. Follow installation, API key setup and first-lookup instructions.",
+    "descriptionTry": "Practice reading research articles with Explained. Highlight a phrase, then click to explain it with optional nearby context.",
+    "previewLabel": "A LITTLE PRACTICE",
+    "startReading": "Start reading",
+    "needSetup": "Need to install first?",
+    "requirements": "Chrome 114+ · Internet access · Your own DeepSeek API key",
+    "toc": "On this page",
+    "related": "Keep exploring",
+    "apiKey": "API key setup",
+    "titleHelp": "Explained Help — Setup & Troubleshooting",
+    "descriptionHelp": "Start with the symptom you see. These steps apply to the extension-wasm-offline v0.2.1 API edition.",
+    "titleApiKey": "Set Up a DeepSeek API Key — Explained Guide",
+    "descriptionApiKey": "Connect Explained to your own DeepSeek API account, then choose when to send a reading lookup. This guide covers v0.2.1.",
+    "changelog": "Versions & updates",
+    "research": "Read research articles",
+    "titleResearch": "Read Research Articles with Explained — Chrome Reading Guide",
+    "descriptionResearch": "A practical way to use Explained with research articles published as HTML. Work from an unfamiliar phrase back to the author’s argument.",
+    "context": "Words in context",
+    "titleContext": "Explain Words in Context with Explained — Chrome Guide",
+    "descriptionContext": "The same word can point to different ideas. This exercise shows what nearby context adds and how to inspect or disable it.",
+    "titleChangelog": "Versions and manual updates — Explained",
+    "descriptionChangelog": "The current default download is extension-wasm-offline v0.2.1, the API edition. Website improvements do not automatically update an installed extension.",
+    "titleGuides": "Explained Guides — Setup & Reading Workflows",
+    "descriptionGuides": "Learn to set up Explained, read research articles and interpret unfamiliar phrases with context.",
+    "guidesHeading": "A little guidance. A better read.",
+    "guidesEyebrow": "FROM SETUP TO UNDERSTANDING",
+    "capabilities": "A little help for the next question",
+    "features": [
+      [
+        "Understand a phrase",
+        "Read a short explanation beside the article, with optional nearby context."
+      ],
+      [
+        "Explore a little further",
+        "Request a longer explanation with a fresh web search and source links."
+      ],
+      [
+        "Follow recent developments",
+        "Use News to explore recent coverage, then check the original sources."
+      ]
+    ]
+  },
+  "zh-CN": {
+    "home": "首页",
+    "try": "体验文章",
+    "download": "下载与安装",
+    "help": "使用帮助",
+    "guides": "教程",
+    "allArticles": "进入文章体验区",
+    "afterInstall": "设置完成，开始一篇好阅读。",
+    "afterInstallBody": "打开体验文章，划选词句后点击图标，或按 Ctrl+X（Mac 为 ⌘X），开始第一次查询。",
+    "backHome": "返回首页",
+    "skip": "跳到正文",
+    "navigation": "网站导航",
+    "languageFallback": "阅读英文版本",
+    "titleHome": "Explained — Chrome AI 阅读与划词解释助手",
+    "titleDownload": "下载 Explained Chrome 扩展 — 安装与 API 设置",
+    "titleTry": "体验 Explained — 研究文章阅读与划词解释",
+    "descriptionHome": "Explained 是一款 Chrome AI 阅读助手，使用你的 DeepSeek API 密钥，结合上下文在原文旁解释陌生词句。",
+    "descriptionDownload": "下载 Explained Chrome API 版，按照步骤完成安装、DeepSeek API 密钥设置，并开始第一次查询。",
+    "descriptionTry": "通过研究文章体验 Explained。划选词句后点击图标，结合可选的附近上下文阅读解释。",
+    "previewLabel": "给好奇心一点练习",
+    "startReading": "开始阅读",
+    "needSetup": "还没有安装？",
+    "requirements": "Chrome 114+ · 需要网络 · 自备 DeepSeek API 密钥",
+    "toc": "本页内容",
+    "related": "继续探索",
+    "apiKey": "API 密钥设置",
+    "titleHelp": "Explained 使用帮助 — 设置与问题排查",
+    "descriptionHelp": "从你遇到的现象开始排查。以下步骤适用于 extension-wasm-offline v0.2.1 API 版。",
+    "titleApiKey": "设置 DeepSeek API 密钥 — Explained 教程",
+    "descriptionApiKey": "将 Explained 连接到你自己的 DeepSeek API 账户，再由你决定何时发送阅读查询。本教程适用于 v0.2.1。",
+    "changelog": "版本记录",
+    "research": "阅读研究文章",
+    "titleResearch": "用 Explained 阅读研究文章 — Chrome 阅读教程",
+    "descriptionResearch": "以 HTML 研究文章为例，从一个不熟悉的词句出发，再回到作者的论证。",
+    "context": "结合上下文理解词句",
+    "titleContext": "结合上下文理解词句 — Explained Chrome 教程",
+    "descriptionContext": "同一个词可能指向不同概念。用这个练习观察附近上下文的作用，并学会查看或关闭它。",
+    "titleChangelog": "版本记录与手动更新 — Explained",
+    "descriptionChangelog": "当前默认下载是 extension-wasm-offline v0.2.1 API 版。网站更新不会自动更新已安装的扩展。",
+    "titleGuides": "Explained 使用教程 — 设置与阅读方法",
+    "descriptionGuides": "从 API 密钥设置到研究文章阅读，按照实际步骤学习使用 Explained。",
+    "guidesHeading": "从设置开始，到读懂一篇文章。",
+    "guidesEyebrow": "一步一步，读得更明白",
+    "capabilities": "帮你接住下一个疑问",
+    "features": [
+      [
+        "读懂一个词句",
+        "在原文旁阅读简短解释，可选择结合附近上下文。"
+      ],
+      [
+        "再深入一点",
+        "请求更详细的解释，通过新的网络搜索查看相关来源。"
+      ],
+      [
+        "追踪近期发展",
+        "用 News 探索近期报道，再回到原始来源核对。"
+      ]
+    ]
+  },
+  "zh-TW": {
+    "home": "首頁",
+    "try": "體驗文章",
+    "download": "下載與安裝",
+    "help": "使用幫助",
+    "guides": "教學",
+    "allArticles": "進入文章體驗區",
+    "afterInstall": "設定完成，開始一篇好閱讀。",
+    "afterInstallBody": "開啟體驗文章，選取詞句後點擊圖示，或按 Ctrl+X（Mac 為 ⌘X），開始第一次查詢。",
+    "backHome": "返回首頁",
+    "skip": "跳到正文",
+    "navigation": "網站導覽",
+    "languageFallback": "閱讀英文版本",
+    "titleHome": "Explained — Chrome AI 閱讀與詞句解釋助手",
+    "titleDownload": "下載 Explained Chrome 擴充功能 — 安裝與 API 設定",
+    "titleTry": "體驗 Explained — 研究文章閱讀與詞句解釋",
+    "descriptionHome": "Explained 是一款 Chrome AI 閱讀助手，使用你的 DeepSeek API 金鑰，結合上下文在原文旁解釋陌生詞句。",
+    "descriptionDownload": "下載 Explained Chrome API 版，按照步驟完成安裝、DeepSeek API 金鑰設定，並開始第一次查詢。",
+    "descriptionTry": "透過研究文章體驗 Explained。選取詞句後點擊圖示，結合可選的附近上下文閱讀解釋。",
+    "previewLabel": "給好奇心一點練習",
+    "startReading": "開始閱讀",
+    "needSetup": "還沒有安裝？",
+    "requirements": "Chrome 114+ · 需要網路 · 自備 DeepSeek API 金鑰",
+    "toc": "本頁內容",
+    "related": "繼續探索",
+    "apiKey": "API 金鑰設定",
+    "titleHelp": "Explained 使用幫助 — 設定與問題排查",
+    "descriptionHelp": "從你遇到的現象開始排查。以下步驟適用於 extension-wasm-offline v0.2.1 API 版。",
+    "changelog": "版本記錄",
+    "capabilities": "幫你接住下一個疑問",
+    "features": [
+      [
+        "讀懂一個詞句",
+        "在原文旁閱讀簡短解釋，可選擇結合附近上下文。"
+      ],
+      [
+        "再深入一點",
+        "請求更詳細的解釋，透過新的網路搜尋查看相關來源。"
+      ],
+      [
+        "追蹤近期發展",
+        "用 News 探索近期報導，再回到原始來源核對。"
+      ]
+    ]
+  }
+}

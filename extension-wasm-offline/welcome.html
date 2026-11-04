@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>extension-wasm-offline</title><link rel="stylesheet" href="welcome.css"></head>
+<body>
+  <main>
+    <header><img class="logo" src="icons/128.png" width="35" height="35" alt=""><span>EXPLAINED</span></header>
+    <section id="setup" aria-labelledby="welcome-title">
+      <p class="eyebrow">A LITTLE MORE UNDERSTANDING</p>
+      <h1 id="welcome-title">Meet your reading companion.</h1>
+      <p class="intro">A clearer meaning. A little more context. Right beside what you’re reading.</p>
+      <div class="sharing">
+        <h2>A little context, with your permission.</h2>
+        <p>With lookups enabled, clicking the selection icon or pressing Ctrl+X (⌘X on Mac) sends your selected text to DeepSeek for an explanation. Switching to News searches for recent developments. Explanations and searches use DeepSeek’s official APIs with your own key. DeepSeek handles submitted text under its API policies. “Explain a little more” also starts a web search. Pause lookups anytime from the toolbar. <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy &amp; permissions</a>.</p>
+        <label class="context-option" for="context"><input id="context" type="checkbox" disabled><span><strong>Include nearby context</strong><span>Share up to 600 nearby characters with your selection to help clarify its meaning. You can change this anytime.</span></span></label>
+      </div>
+      <div class="api-key-field">
+        <label for="api-key">DeepSeek API key</label>
+        <input id="api-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="512" aria-describedby="key-help key-error" disabled>
+        <p id="key-help">One key powers explanations and web search. Kept only in memory for this browser session. Re-enter after restarting Chrome or reloading/updating the extension. API calls are billed to your DeepSeek account. <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer">Get an API key ↗</a></p>
+        <p id="key-error" role="alert"></p>
+      </div>
+      <button id="enable" class="primary" disabled>Enable lookups</button>
+      <button id="later" class="secondary">Maybe later</button>
+      <p class="footnote">Enabling verifies your key without sending reading text or making a paid lookup.</p>
+    </section>
+    <section id="complete" aria-labelledby="complete-title" hidden>
+      <p class="eyebrow">READY FOR YOUR NEXT READ</p>
+      <h1 id="complete-title" tabindex="-1">You’re all set.</h1>
+      <p class="intro">Your curiosity club is ready. Try your first lookup on a short, surprising article.</p>
+      <ol class="steps">
+        <li><span class="step-number" aria-hidden="true">1</span><span><strong>Pick a story that makes you curious.</strong><span>Start exploring opens a practice article on the Explained website.</span></span></li>
+        <li><span class="step-number" aria-hidden="true">2</span><span><strong>Highlight a word or phrase.</strong><span>Click the small icon beside your selection, or press Ctrl+X (⌘X on Mac), to explain it. Selecting or copying alone sends nothing.</span></span></li>
+        <li><span class="step-number" aria-hidden="true">3</span><span><strong>Follow your curiosity.</strong><span>Switch to News for recent developments, or choose “Explain a little more” for a deeper explanation with web sources.</span></span></li>
+      </ol>
+      <button id="done" class="primary">Start exploring</button>
+      <p class="footnote">Start exploring opens the website; it does not send text or open DeepSeek. Already have a reading page open? Refresh it once before trying.</p>
+      <p class="toolbar-tip">Pin Explained in Chrome’s Extensions menu to keep language, context, API settings and pause controls close by.</p>
+    </section>
+    <p class="footnote"><a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy &amp; permissions</a></p>
+    <p id="feedback" role="status"></p>
+    <button id="reload" class="secondary" hidden>Try setup again</button>
+  </main>
+  <script src="shared.js"></script><script src="welcome.js"></script>
+</body>
+</html>
