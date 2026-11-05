@@ -1,6 +1,12 @@
 {
   "en": {
     "home": "Home",
+    "blog": "Blog",
+    "blogLaunch": "I built Explained for people who ACTUALLY READ",
+    "titleBlog": "Explained Blog",
+    "descriptionBlog": "Launch notes and stories from the maker of Explained.",
+    "titleBlogLaunch": "I built Explained for people who ACTUALLY READ — Explained Blog",
+    "descriptionBlogLaunch": "Why I built Explained, a Chrome extension that explains a highlighted phrase in context, and what I wanted from an AI reading companion.",
     "try": "Try it",
     "download": "Download & setup",
     "help": "Help",

@@ -68,5 +68,13 @@
       "en",
       "zh-CN"
     ]
+  },
+  "blog": {
+    "path": "blog/",
+    "languages": ["en"]
+  },
+  "blogLaunch": {
+    "path": "blog/for-people-who-actually-read/",
+    "languages": ["en"]
   }
 }

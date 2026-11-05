@@ -8,6 +8,7 @@ const pageCopy = require('./pages/copy.json');
 const documents = require('./pages/documents.json');
 const config = require('./config.json');
 const sections = require('./sections.cjs');
+const blog = require('./blog.cjs');
 const languages = [
   { key: 'en', path: '', label: 'English', lang: 'en' },
   { key: 'zh-CN', path: 'zh-cn/', label: '简体中文', lang: 'zh-CN' },
@@ -73,6 +74,8 @@ function guideIndex(ctx) {
 }
 function body(ctx) {
   if (ctx.key === 'home') return home(ctx);
+  if (ctx.key === 'blog') return blog.index(ctx);
+  if (ctx.key === 'blogLaunch') return blog.launch(ctx);
   if (ctx.key === 'guides') return guideIndex(ctx);
   if (documents[ctx.key]) return documentPage(ctx);
   if (ctx.key === 'try') return sections.practice(ctx) + `<p class="wrap"><a class="text-link" href="${ctx.url('help')}">${escape(ctx.ui.help)} ${icon('arrow')}</a></p><section class="wrap next-step"><h2>${escape(ctx.ui.needSetup)}</h2><a class="button" href="${ctx.url('download')}">${escape(ctx.ui.download)} ${icon('arrow')}</a></section>`;
@@ -94,12 +97,20 @@ function renderPage(language, release, key = 'home', siteConfig = config) {
     downloadUrl: new URL(`downloads/${release.filename}`, siteConfig.url).href, inLanguage: ['en', 'zh-CN', 'zh-TW'], license: 'https://opensource.org/license/mit'
   };
   const isGuide = ['apiKey', 'research', 'context'].includes(key);
+  const blogMetadata = {
+    blog: { '@type': 'Blog' },
+    blogLaunch: { '@type': 'BlogPosting', headline: ui.blogLaunch, datePublished: blog.published }
+  }[key];
+  const blogNav = locale === 'en' && ['home', 'blog', 'blogLaunch'].includes(key)
+    ? `<a href="${url('blog')}"${key === 'blog' ? ' aria-current="page"' : ''}>${escape(ui.blog)}</a>`
+    : '';
+  const parent = isGuide ? 'guides' : key === 'blogLaunch' ? 'blog' : null;
   const crumbs = [{ name: ui.home, item: new URL(pagePath(language, 'home'), siteConfig.url).href }];
-  if (isGuide) crumbs.push({ name: ui.guides, item: new URL(pagePath(language, 'guides'), siteConfig.url).href });
+  if (parent) crumbs.push({ name: ui[parent], item: new URL(pagePath(language, parent), siteConfig.url).href });
   crumbs.push({ name: ui[key], item: canonical });
   const website = { '@context': 'https://schema.org', '@type': 'WebSite', '@id': new URL('#website', siteConfig.url).href,
     name: 'Explained', url: siteConfig.url, description: locales.en.officialSite, inLanguage: ['en', 'zh-CN', 'zh-TW'] };
-  const structured = key === 'home' ? [website, metadata] : [metadata, { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((item, index) => ({ '@type': 'ListItem', position: index + 1, ...item })) }];
+  const structured = key === 'home' ? [website, metadata] : [blogMetadata ? { '@context': 'https://schema.org', ...blogMetadata, name: ui[key], description, url: canonical, inLanguage: language.lang } : metadata, { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((item, index) => ({ '@type': 'ListItem', position: index + 1, ...item })) }];
   const languageLinks = variants.map(item => `<li><a href="${url(key, item.key)}" lang="${item.lang}" hreflang="${item.lang}" data-language-link="${item.key}"${item.key === locale ? ' aria-current="page"' : ''}>${escape(item.label)}${item.key === locale ? icon('check') : ''}</a></li>`).join('');
   return `<!doctype html>
 <html lang="${language.lang}" data-locale="${locale}" data-page="${key}" data-default-topic="${siteConfig.defaultTopic}">
@@ -108,14 +119,14 @@ function renderPage(language, release, key = 'home', siteConfig = config) {
 <meta name="description" content="${escape(description)}"><meta name="theme-color" content="#fffdf4">
 <title>${escape(title)}</title><link rel="canonical" href="${canonical}">
 ${indexed ? variants.filter(item => item.key !== 'mixed').map(item => `<link rel="alternate" hreflang="${item.lang}" href="${new URL(pagePath(item, key), siteConfig.url).href}">`).join('\n') + `<link rel="alternate" hreflang="x-default" href="${new URL(pages[key].path, siteConfig.url).href}">` : '<meta name="robots" content="noindex,follow">'}
-<meta property="og:type" content="website"><meta property="og:site_name" content="Explained"><meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:url" content="${canonical}">
+<meta property="og:type" content="${key === 'blogLaunch' ? 'article' : 'website'}"><meta property="og:site_name" content="Explained"><meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:url" content="${canonical}">
 <meta property="og:image" content="${new URL('assets/share.png', siteConfig.url).href}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Explained. Keep reading. Stay curious."><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" sizes="32x32" href="${asset('favicon.png')}"><link rel="stylesheet" href="${asset('site.css')}"><script src="${asset('site.js')}" defer></script>
 <script type="application/ld+json">${JSON.stringify(structured).replace(/</g, '\\u003c')}</script>
 </head>
 <body id="top"><a class="skip" href="#content">${escape(ui.skip)}</a>
-<header class="topbar wrap"><a class="brand" href="${url('home')}" aria-label="Explained"><img class="brand-mark" src="${asset('brand-mark.png')}" width="35" height="35" alt="">explained</a><nav class="main-nav" aria-label="${escape(ui.navigation)}"><a href="${key === 'home' ? '#practice' : url('try')}"${key === 'try' ? ' aria-current="page"' : ''}>${escape(ui.try)}</a><a href="${url('guides')}"${key === 'guides' ? ' aria-current="page"' : ''}>${escape(ui.guides)}${pages.guides.languages.includes(locale) ? '' : ' (English)'}</a><a href="${url('help')}"${key === 'help' ? ' aria-current="page"' : ''}>${escape(ui.help)}</a><a href="${siteConfig.repository}" target="_blank" rel="noopener" aria-label="${escape(t.source)}">GitHub ↗</a><a class="mobile-download" href="${url('download')}"${key === 'download' ? ' aria-current="page"' : ''}>${escape(ui.download)}</a></nav><div class="nav-tools"><details class="language-menu"><summary aria-label="${escape(t.readingLanguage)}">${icon('globe')}<span>${escape(language.label)}</span><span aria-hidden="true">⌄</span></summary><ul>${languageLinks}</ul></details><a class="button small" href="${url('download')}">${escape(t.download)}${icon('arrow')}</a></div></header>
-<main id="content">${key !== 'home' ? `<nav class="breadcrumbs wrap" aria-label="${escape(ui.navigation)}"><a href="${url('home')}">${escape(ui.home)}</a><span aria-hidden="true">/</span>${isGuide ? `<a href="${url('guides')}">${escape(ui.guides)}</a><span aria-hidden="true">/</span>` : ''}<span aria-current="page">${escape(ui[key])}</span></nav>` : ''}${body(ctx)}</main>
+<header class="topbar wrap"><a class="brand" href="${url('home')}" aria-label="Explained"><img class="brand-mark" src="${asset('brand-mark.png')}" width="35" height="35" alt="">explained</a><nav class="main-nav" aria-label="${escape(ui.navigation)}"><a href="${key === 'home' ? '#practice' : url('try')}"${key === 'try' ? ' aria-current="page"' : ''}>${escape(ui.try)}</a><a href="${url('guides')}"${key === 'guides' ? ' aria-current="page"' : ''}>${escape(ui.guides)}${pages.guides.languages.includes(locale) ? '' : ' (English)'}</a><a href="${url('help')}"${key === 'help' ? ' aria-current="page"' : ''}>${escape(ui.help)}</a>${blogNav}<a href="${siteConfig.repository}" target="_blank" rel="noopener" aria-label="${escape(t.source)}">GitHub ↗</a><a class="mobile-download" href="${url('download')}"${key === 'download' ? ' aria-current="page"' : ''}>${escape(ui.download)}</a></nav><div class="nav-tools"><details class="language-menu"><summary aria-label="${escape(t.readingLanguage)}">${icon('globe')}<span>${escape(language.label)}</span><span aria-hidden="true">⌄</span></summary><ul>${languageLinks}</ul></details><a class="button small" href="${url('download')}">${escape(t.download)}${icon('arrow')}</a></div></header>
+<main id="content">${key !== 'home' ? `<nav class="breadcrumbs wrap" aria-label="${escape(ui.navigation)}"><a href="${url('home')}">${escape(ui.home)}</a><span aria-hidden="true">/</span>${parent ? `<a href="${url(parent)}">${escape(ui[parent])}</a><span aria-hidden="true">/</span>` : ''}<span aria-current="page">${escape(ui[key])}</span></nav>` : ''}${body(ctx)}</main>
 <footer class="site-footer wrap"><div><a class="footer-title" href="${url('home')}">explained.</a><p>${escape(t.footer)}</p><p class="site-identity">${escape(t.officialSite)}</p><p class="independent">${escape(t.independent)}</p></div><nav class="footer-links" aria-label="${escape(ui.navigation)}"><a href="${url('download')}">${escape(ui.download)}</a><a href="${key === 'home' ? '#practice' : url('try')}">${escape(ui.try)}</a><a href="${url('guides')}">${escape(ui.guides)}${pages.guides.languages.includes(locale) ? '' : ' (English)'}</a><a href="${url('help')}">${escape(ui.help)}</a><a href="${url('apiKey')}">${escape(ui.apiKey)}${pages.apiKey.languages.includes(locale) ? '' : ' (English)'}</a><a href="${url('changelog')}">${escape(ui.changelog)}${pages.changelog.languages.includes(locale) ? '' : ' (English)'}</a><a href="${path('privacy.html')}">${escape(t.privacy)}${locale.startsWith('zh') ? ' (English)' : ''}</a><a href="${siteConfig.repository}" target="_blank" rel="noopener">${escape(t.source)} ↗</a></nav></footer>
 </body></html>\n`;
 }
